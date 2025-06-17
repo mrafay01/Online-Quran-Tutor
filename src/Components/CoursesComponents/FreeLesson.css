@@ -1,0 +1,105 @@
+@import url('https://fonts.googleapis.com/css2?family=Alata&family=Exo+2:wght@100..900&family=Lora:wght@400..700&family=Varela+Round&display=swap');
+
+.trial-section {
+    position: relative;
+    text-align: center;
+    padding: 100px 30px;
+    background: #F6F6E6;
+    min-height: 60vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.trial-section::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: inherit;
+    z-index: 0;
+    box-shadow: inset 0 0 5px rgba(61, 77, 48, 0.85),
+                inset 0 0 12px rgba(61, 77, 48, 0.85),
+                inset 0 0 25px rgba(61, 77, 48, 0.85),
+                inset 0 0 30px rgba(61, 77, 48, 0.85);
+}
+
+.trial-title {
+    font-size: 2.6rem;
+    font-weight: bold;
+    color: #3D4D30;
+    font-family: 'Alata', sans-serif;
+    margin-bottom: 30px;
+    text-align: center;
+    position: relative;
+    z-index: 1;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  /* New underline for trial-title */
+  .trial-title::after {
+    content: "";
+    position: absolute;
+    bottom: -12px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80px; /* You can adjust width */
+    height: 4px;
+    background: #b5b580; /* Same underline color */
+    border-radius: 2px;
+  }
+  
+
+.trial-text {
+    font-size: 1.05rem;
+    color: #666648;
+    max-width: 800px;
+    line-height: 1.5;
+    margin-bottom: 30px;
+    z-index: 1;
+    position: relative;
+}
+
+.trial-button {
+    display: inline-block;
+    padding: 15px 30px;
+    background: #f1f1d3;
+    color: #2f3d2f;
+    font-size: 1.2rem;
+    font-weight: bold;
+    border-radius: 10px;
+    text-decoration: none;
+    transition: all 0.2s ease-in;
+    position: relative;
+    z-index: 10;
+}
+
+.trial-button:hover {
+    background: #354235;
+    color: #f1f1d3;
+    letter-spacing: 0.05rem;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .trial-section {
+        padding: 80px 20px;
+    }
+
+    .trial-title {
+        font-size: 2rem;
+    }
+
+    .trial-text {
+        font-size: 0.95rem;
+        width: 90%;
+    }
+
+    .trial-button {
+        font-size: 1rem;
+        padding: 12px 25px;
+    }
+}
