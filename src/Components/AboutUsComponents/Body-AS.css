@@ -1,0 +1,182 @@
+/* Import Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Alata&family=Exo+2:wght@0,100..900&family=Lora:wght@400..700&family=Varela+Round&display=swap');
+
+/* Reset and Global Styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Alata", sans-serif;
+}
+
+/* About Us Content Wrapper */
+.aboutus-content-wrapper {
+  padding: 100px 30px;
+  background: linear-gradient(135deg, #f6f6e6 0%, #e8e8d8 100%);
+  display: flex;
+  flex-direction: column;
+  gap: 80px;
+  position: relative;
+  overflow: hidden;
+  z-index: 1;
+}
+
+/* Section Styling */
+.intro-section,
+.mission-section,
+.values-section,
+.choose-section {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(8px);
+  padding: 50px 40px;
+  border-radius: 20px;
+  box-shadow: 0 15px 35px rgba(61, 77, 48, 0.15);
+  border: 1px solid rgba(61, 77, 48, 0.1);
+  max-width: 1000px;
+  margin: 0 auto;
+  animation: fade-in 1s ease;
+}
+
+/* Fade-in Animation */
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Headings */
+.intro-section h2,
+.mission-section h2,
+.values-section h2,
+.choose-section h2 {
+  font-size: 2.2rem;
+  color: #3d4d30;
+  margin-bottom: 20px;
+  position: relative;
+  text-align: center;
+  text-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.intro-section h2::after,
+.mission-section h2::after,
+.values-section h2::after,
+.choose-section h2::after {
+  content: "";
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60px;
+  height: 3px;
+  background: #5c724a;
+  border-radius: 2px;
+}
+
+/* Paragraph Text */
+.intro-section p,
+.mission-section p,
+.choose-section p {
+  font-size: 1.1rem;
+  color: #333;
+  line-height: 1.8;
+  margin-top: 20px;
+  font-family: "Lora", serif;
+  text-align: center;
+}
+
+/* Values List */
+.values-section ul {
+  list-style-type: none;
+  padding: 0;
+  margin-top: 20px;
+}
+
+.values-section li {
+  font-size: 1.1rem;
+  color: #333;
+  line-height: 1.7;
+  margin-bottom: 15px;
+  text-align: left;
+  padding-left: 25px;
+  position: relative;
+  font-family: "Lora", serif;
+}
+
+.values-section li::before {
+  content: '✓';
+  position: absolute;
+  left: 0;
+  color: #5c724a;
+  font-size: 1.2rem;
+  font-weight: bold;
+}
+
+/* Responsive Design */
+@media (max-width: 992px) {
+  .aboutus-content-wrapper {
+    padding: 80px 20px;
+  }
+
+  .intro-section,
+  .mission-section,
+  .values-section,
+  .choose-section {
+    padding: 40px 30px;
+  }
+
+  .intro-section h2,
+  .mission-section h2,
+  .values-section h2,
+  .choose-section h2 {
+    font-size: 2rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .aboutus-content-wrapper {
+    padding: 60px 15px;
+  }
+
+  .intro-section,
+  .mission-section,
+  .values-section,
+  .choose-section {
+    padding: 30px 20px;
+  }
+
+  .intro-section h2,
+  .mission-section h2,
+  .values-section h2,
+  .choose-section h2 {
+    font-size: 1.8rem;
+  }
+
+  .intro-section p,
+  .mission-section p,
+  .choose-section p,
+  .values-section li {
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .intro-section,
+  .mission-section,
+  .values-section,
+  .choose-section {
+    padding: 20px 15px;
+  }
+
+  .intro-section h2,
+  .mission-section h2,
+  .values-section h2,
+  .choose-section h2 {
+    font-size: 1.6rem;
+  }
+
+  .intro-section p,
+  .mission-section p,
+  .choose-section p,
+  .values-section li {
+    font-size: 0.95rem;
+  }
+}
