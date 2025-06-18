@@ -1,5 +1,5 @@
 "use client";
-
+import { useParams } from "react-router-dom";
 import Sidebar from "./Sidebar.jsx";
 import AvatarImg from "../Assets/Images/boy-avatar.png";
 import { useState, useEffect } from "react";

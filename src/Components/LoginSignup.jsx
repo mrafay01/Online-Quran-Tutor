@@ -38,15 +38,20 @@ const LoginSignup = () => {
     username: "",
     password: "",
     confirmPassword: "",
+    region: "",
+    gender: "",
+    pic: "",
     dob: "",
     phone: "",
     address: "",
     qualification: "", // For teachers
-    experience: "", // For teachers
-    subjects: "", // For teachers
-    studentGrade: "", // For students
+    // experience: "", // For teachers
+    courses: "", // For teachers
+    // studentGrade: "", // For students
     parentOf: "", // For parents
-    usernameSuffix: ""
+    usernameSuffix: "",
+    spic: "",
+    cnic: "",
   });
 
   // Password strength criteria
@@ -140,12 +145,11 @@ const LoginSignup = () => {
       if (!formData.qualification)
         newErrors.qualification = "Qualification is required";
       if (!formData.experience) newErrors.experience = "Experience is required";
-      if (!formData.subjects) newErrors.subjects = "Subjects are required";
-    } else if (selectedRole === "student") {
-      if (!formData.studentGrade)
-        newErrors.studentGrade = "Grade level is required";
+      if (!formData.courses) newErrors.courses = "courses are required";
     } else if (selectedRole === "parent") {
-      if (!formData.parentOf) newErrors.parentOf = "Student name is required";
+      if (!formData.parentOf) newErrors.parentOf = "Student username is required";
+      if (!formData.cnic) newErrors.cnic = "CNIC is required";
+      if (!formData.region) newErrors.region = "Region is required";
     }
 
     setErrors(newErrors);
@@ -162,27 +166,90 @@ const LoginSignup = () => {
     setIsLoading(true);
 
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-      console.log("Form submitted:", {
-        ...formData,
-        role: selectedRole,
-        rememberMe,
+      if (selectedRole === "student" && action === "Sign Up") {
+        // Prepare payload for Flask API
+        const payload = {
+          name: formData.firstName + " " + formData.lastName,
+          dob: formData.dob,
+          username: `${selectedRole}_${formData.usernameSuffix}`,
+          region: formData.region,
+          password: formData.password,
+          gender: formData.gender[0],
+          spic: formData.spic,
+        };
+
+        const response = await fetch("http://localhost:5000/SignUpStudents", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+
+        if (response.status === 409) {
+          const data = await response.json();
+          setErrors({ form: data.error });
+          setIsLoading(false);
+          return;
+        }
+
+        if (!response.ok) {
+          setErrors({ form: "An error occurred. Please try again." });
+          setIsLoading(false);
+          return;
+        }
+
+        // Success
+        alert("Account created successfully!");
+        navigate(`/${payload.username}/dashboard`);
+      } else if (selectedRole === "parent" && action === "Sign Up") {
+        const payload = {
+          name: formData.firstName + " " + formData.lastName,
+          region: formData.region,
+          cnic: formData.cnic,
+          username: `parent_${formData.usernameSuffix}`,
+          password: formData.password,
+          student_username: formData.parentOf,
+        };
+
+        const response = await fetch("http://localhost:5000/SignupParent", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+
+        if (response.status === 409) {
+          const data = await response.json();
+          setErrors({ form: data.error });
+          setIsLoading(false);
+          return;
+        }
+
+        if (!response.ok) {
+          setErrors({ form: "An error occurred. Please try again." });
+          setIsLoading(false);
+          return;
+        }
+
+        // Success
+        alert("Account created successfully!");
+        navigate(`/${payload.username}/dashboard`);
+      } else {
+        // Simulate API call
+        await new Promise((resolve) => setTimeout(resolve, 1500));
+        console.log("Form submitted:", {
+          ...formData,
+          role: selectedRole,
+          rememberMe,
+        });
+
+        navigate(`/${formData.username}/dashboard`);
+
+        // Show success message
+        alert(
+          action === "Login"
+            ? "Login successful!"
+            : "Account created successfully!"
+        );
       }
-      
-    );
-
-      // Here you would typically make an API call to register/login the user
-      // If successful, you might redirect the user
-
-      // Show success message
-      alert(
-        action === "Login"
-          ? "Login successful!"
-          : "Account created successfully!"
-      );
-      navigate(`/${formData.username}/dashboard`);
-
     } catch (error) {
       console.error("Error submitting form:", error);
       setErrors({ form: "An error occurred. Please try again." });
@@ -287,66 +354,132 @@ const LoginSignup = () => {
               )}
             </div>
             <div className="input">
-              <label htmlFor="subjects">
+              <label htmlFor="courses">
                 <BookOpen size={18} className="input-icon" />
-                Subjects You Can Teach
+                courses You Can Teach
               </label>
               <input
                 type="text"
-                id="subjects"
-                name="subjects"
-                className={`textfield ${errors.subjects ? "error" : ""}`}
+                id="courses"
+                name="courses"
+                className={`textfield ${errors.courses ? "error" : ""}`}
                 placeholder="e.g., Quran Recitation, Tajweed, Arabic"
-                value={formData.subjects}
+                value={formData.courses}
                 onChange={handleInputChange}
               />
-              {errors.subjects && (
-                <div className="error-message">{errors.subjects}</div>
+              {errors.courses && (
+                <div className="error-message">{errors.courses}</div>
               )}
             </div>
           </>
         );
       case "student":
         return (
-          <div className="input">
-            <label htmlFor="studentGrade">
-              <BookOpen size={18} className="input-icon" />
-              Grade Level
-            </label>
-            <input
-              type="text"
-              id="studentGrade"
-              name="studentGrade"
-              className={`textfield ${errors.studentGrade ? "error" : ""}`}
-              placeholder="Enter your grade level"
-              value={formData.studentGrade}
-              onChange={handleInputChange}
-            />
-            {errors.studentGrade && (
-              <div className="error-message">{errors.studentGrade}</div>
-            )}
-          </div>
+          <>
+            {/* <div className="input">
+              <label htmlFor="studentGrade">
+                <BookOpen size={18} className="input-icon" />
+                Grade Level
+              </label>
+              <input
+                type="text"
+                id="studentGrade"
+                name="studentGrade"
+                className={`textfield ${errors.studentGrade ? "error" : ""}`}
+                placeholder="Enter your grade level"
+                value={formData.studentGrade}
+                onChange={handleInputChange}
+              />
+              {errors.studentGrade && (
+                <div className="error-message">{errors.studentGrade}</div>
+              )}
+            </div> */
+            /* <div className="input">
+              <label htmlFor="region">Region</label>
+              <input
+                type="text"
+                id="region"
+                name="region"
+                className="textfield"
+                placeholder="Enter your region"
+                value={formData.region || ""}
+                onChange={handleInputChange}
+              />
+            </div>
+            <div className="input">
+              <label htmlFor="gender">Gender</label>
+              <select
+                id="gender"
+                name="gender"
+                className="textfield"
+                value={formData.gender || ""}
+                onChange={handleInputChange}
+              >
+                <option value="">Select gender</option>
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+              </select>
+            </div>
+            <div className="input">
+              <label htmlFor="spic">Profile Image URL</label>
+              <input
+                type="text"
+                id="spic"
+                name="spic"
+                className="textfield"
+                placeholder="Enter image URL"
+                value={formData.spic || ""}
+                onChange={handleInputChange}
+              />
+            </div> */}
+          </>
         );
       case "parent":
         return (
-          <div className="input">
-            <label htmlFor="parentOf">
-              <Users size={18} className="input-icon" />
-              Parent of (Student Name)
-            </label>
-            <input
-              type="text"
-              id="parentOf"
-              name="parentOf"
-              className={`textfield ${errors.parentOf ? "error" : ""}`}
-              placeholder="Enter student's name"
-              value={formData.parentOf}
-              onChange={handleInputChange}
-            />
-            {errors.parentOf && (
-              <div className="error-message">{errors.parentOf}</div>
-            )}
-          </div>
+          <>
+            <div className="input">
+              <label htmlFor="parentOf">
+                <Users size={18} className="input-icon" />
+                Parent of (Student Username)
+              </label>
+              <input
+                type="text"
+                id="parentOf"
+                name="parentOf"
+                className={`textfield ${errors.parentOf ? "error" : ""}`}
+                placeholder="Enter student's username"
+                value={formData.parentOf}
+                onChange={handleInputChange}
+              />
+              {errors.parentOf && (
+                <div className="error-message">{errors.parentOf}</div>
+              )}
+            </div>
+            <div className="input">
+              <label htmlFor="cnic">CNIC</label>
+              <input
+                type="text"
+                id="cnic"
+                name="cnic"
+                className="textfield"
+                placeholder="Enter your CNIC"
+                value={formData.cnic || ""}
+                onChange={handleInputChange}
+              />
+            </div>
+            <div className="input">
+              <label htmlFor="region">Region</label>
+              <input
+                type="text"
+                id="region"
+                name="region"
+                className="textfield"
+                placeholder="Enter your region"
+                value={formData.region || ""}
+                onChange={handleInputChange}
+              />
+            </div>
+          </>
         );
       default:
         return null;
@@ -516,6 +649,45 @@ const LoginSignup = () => {
                     )}
                   </div>
 
+                  <div className="input">
+                    <label htmlFor="region">Region</label>
+                    <input
+                      type="text"
+                      id="region"
+                      name="region"
+                      className="textfield"
+                      placeholder="Enter your region"
+                      value={formData.region || ""}
+                      onChange={handleInputChange}
+                    />
+                  </div>
+                  <div className="input">
+                    <label htmlFor="gender">Gender</label>
+                    <select
+                      id="gender"
+                      name="gender"
+                      className="textfield"
+                      value={formData.gender || ""}
+                      onChange={handleInputChange}
+                    >
+                      <option value="">Select gender</option>
+                      <option value="M">Male</option>
+                      <option value="F">Female</option>
+                    </select>
+                  </div>
+                  <div className="input">
+                    <label htmlFor="spic">Profile Image URL</label>
+                    <input
+                      type="text"
+                      id="spic"
+                      name="spic"
+                      className="textfield"
+                      placeholder="Enter image URL"
+                      value={formData.spic || ""}
+                      onChange={handleInputChange}
+                    />
+                  </div>
+
                   {/* Role-specific fields */}
                   {renderRoleSpecificFields()}
                 </>
@@ -613,9 +785,8 @@ const LoginSignup = () => {
                 type="submit"
                 className={`submit ${isLoading ? "loading" : ""}`}
                 disabled={isLoading}
-              >               
+              >
                 {isLoading ? (
-                  
                   <>
                     <span className="spinner"></span>
                     <span>
@@ -642,9 +813,14 @@ const LoginSignup = () => {
                     address: "",
                     qualification: "",
                     experience: "",
-                    subjects: "",
-                    studentGrade: "",
+                    courses: "",
+                    // studentGrade: "",
                     parentOf: "",
+                    region: "",
+                    gender: "",
+                    spic: "",
+                    student_username: "",
+                    cnic: "",
                   });
                   setErrors({});
                 }}

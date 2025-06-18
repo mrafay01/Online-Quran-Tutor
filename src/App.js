@@ -29,12 +29,12 @@ function App() {
         <Route path='/contact-us' element={<ContactUs/>}/>
         <Route path='/schedule' element={<Schedule/>}/>
         <Route path='/profile' element={<Profile/>}/>
-        <Route path='/user/dashboard' element={<Dashboard/>}/>
-        <Route path='/user/my-courses' element={<MyCoursesPage/>}/>
-        <Route path='/user/setting' element={<Setting/>}/>
-        <Route path='/user/progress' element={<ProgressPage/>}/>
-        <Route path='/user/schedule' element={<SchedulePage/>}/>
-        <Route path='/user/notifications' element={<NotificationsPage/>}/>
+        <Route path='/:username/dashboard' element={<Dashboard/>}/>
+        <Route path='/:username/my-courses' element={<MyCoursesPage/>}/>
+        <Route path='/:username/setting' element={<Setting/>}/>
+        <Route path='/:username/progress' element={<ProgressPage/>}/>
+        <Route path='/:username/schedule' element={<SchedulePage/>}/>
+        <Route path='/:username/notifications' element={<NotificationsPage/>}/>
         
       </Routes>
     </BrowserRouter>
