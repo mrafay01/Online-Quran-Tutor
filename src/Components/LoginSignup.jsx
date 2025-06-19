@@ -1,5 +1,7 @@
+import timeZones from "../timezone-options.json";
 import React, { useState, useEffect } from "react";
 import RoleModal from "../Components/ModalBox";
+import Select from "react-select";
 import { useNavigate } from "react-router-dom";
 import {
   Eye,
@@ -20,7 +22,7 @@ import {
 import "../Components/Assets/Style/LoginSignup.css";
 
 import bgimg from "../Components/Assets/Images/login-signup.jpg";
-
+import { BiMoney } from "react-icons/bi";
 const LoginSignup = () => {
   const [isDateFocused, setIsDateFocused] = useState(false);
   const [action, setAction] = useState("Sign Up");
@@ -45,7 +47,7 @@ const LoginSignup = () => {
     phone: "",
     address: "",
     qualification: "", // For teachers
-    // experience: "", // For teachers
+    hourlyrate: "", // For teachers
     courses: "", // For teachers
     // studentGrade: "", // For students
     parentOf: "", // For parents
@@ -54,13 +56,10 @@ const LoginSignup = () => {
     cnic: "",
   });
 
-  // Password strength criteria
   const passwordCriteria = [
     { regex: /.{8,}/, text: "At least 8 characters" },
-    { regex: /[A-Z]/, text: "At least one uppercase letter" },
-    { regex: /[a-z]/, text: "At least one lowercase letter" },
+    { regex: /[A-Z]|[a-z]/, text: "At least one letter" },
     { regex: /[0-9]/, text: "At least one number" },
-    { regex: /[^A-Za-z0-9]/, text: "At least one special character" },
   ];
 
   // Calculate password strength
@@ -144,16 +143,29 @@ const LoginSignup = () => {
     if (selectedRole === "teacher") {
       if (!formData.qualification)
         newErrors.qualification = "Qualification is required";
-      if (!formData.experience) newErrors.experience = "Experience is required";
+      if (!formData.hourlyrate) newErrors.hourlyrate = "hourlyrate is required";
       if (!formData.courses) newErrors.courses = "courses are required";
     } else if (selectedRole === "parent") {
-      if (!formData.parentOf) newErrors.parentOf = "Student username is required";
+      if (!formData.parentOf)
+        newErrors.parentOf = "Student username is required";
       if (!formData.cnic) newErrors.cnic = "CNIC is required";
       if (!formData.region) newErrors.region = "Region is required";
     }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
+  };
+
+  const options = timeZones.map((tz) => ({
+    value: tz.zone,
+    label: `${tz.gmt} ${tz.name}`,
+  }));
+
+  const handleTimezoneChange = (selectedOption) => {
+    setFormData({
+      ...formData,
+      region: selectedOption.value,
+    });
   };
 
   const handleSubmit = async (e) => {
@@ -166,6 +178,7 @@ const LoginSignup = () => {
     setIsLoading(true);
 
     try {
+      // STUDENT
       if (selectedRole === "student" && action === "Sign Up") {
         // Prepare payload for Flask API
         const payload = {
@@ -200,7 +213,10 @@ const LoginSignup = () => {
         // Success
         alert("Account created successfully!");
         navigate(`/${payload.username}/dashboard`);
-      } else if (selectedRole === "parent" && action === "Sign Up") {
+      }
+
+      // PARENT
+      else if (selectedRole === "parent" && action === "Sign Up") {
         const payload = {
           name: formData.firstName + " " + formData.lastName,
           region: formData.region,
@@ -211,6 +227,44 @@ const LoginSignup = () => {
         };
 
         const response = await fetch("http://localhost:5000/SignupParent", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+
+        if (response.status === 409) {
+          const data = await response.json();
+          setErrors({ form: data.error });
+          setIsLoading(false);
+          return;
+        }
+
+        if (!response.ok) {
+          setErrors({ form: "An error occurred. Please try again." });
+          setIsLoading(false);
+          return;
+        }
+
+        // Success
+        alert("Account created successfully!");
+        navigate(`/${payload.username}/dashboard`);
+      }
+
+      // TEACHER
+      else if (selectedRole === "teacher" && action === "Sign Up") {
+        const payload = {
+          name: formData.firstName + " " + formData.lastName,
+          region: formData.region,
+          cnic: formData.cnic,
+          dob: formData.dob,
+          hourlyrate: formData.hourlyrate,
+          username: `teacher_${formData.usernameSuffix}`,
+          password: formData.password,
+          qualification: formData.qualification,
+          courses: formData.courses,
+        };
+
+        const response = await fetch("http://localhost:5000/SignupTeacher", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
@@ -336,21 +390,28 @@ const LoginSignup = () => {
               )}
             </div>
             <div className="input">
-              <label htmlFor="experience">
-                <Briefcase size={18} className="input-icon" />
-                Years of Experience
+              <label htmlFor="hourlyrate">
+                <BiMoney size={18} className="input-icon" />
+                Mention your hourlyrate
               </label>
-              <input
-                type="number"
-                id="experience"
-                name="experience"
-                className={`textfield ${errors.experience ? "error" : ""}`}
-                placeholder="Enter years of experience"
-                value={formData.experience}
+              <select
+                id="hourlyrate"
+                name="hourlyrate"
+                className={`textfield ${errors.hourlyrate ? "error" : ""}`}
+                value={formData.hourlyrate}
                 onChange={handleInputChange}
-              />
-              {errors.experience && (
-                <div className="error-message">{errors.experience}</div>
+                isSearchable
+              >
+                <option value="">Select hourly rate</option>
+                {Array.from({ length: 14 }, (_, i) => i + 2).map((rate) => (
+                  <option key={rate} value={rate}>
+                    ${rate}
+                  </option>
+                ))}
+              </select>
+
+              {errors.hourlyrate && (
+                <div className="error-message">{errors.hourlyrate}</div>
               )}
             </div>
             <div className="input">
@@ -358,15 +419,21 @@ const LoginSignup = () => {
                 <BookOpen size={18} className="input-icon" />
                 courses You Can Teach
               </label>
-              <input
+              <select
                 type="text"
                 id="courses"
                 name="courses"
                 className={`textfield ${errors.courses ? "error" : ""}`}
-                placeholder="e.g., Quran Recitation, Tajweed, Arabic"
                 value={formData.courses}
                 onChange={handleInputChange}
-              />
+              >
+                <option value="">Select Courses</option>
+                {["Nazra", "Tajweed", "Hifz", "Qiraat"].map((course) => (
+                  <option key={course} value={course}>
+                    {course}
+                  </option>
+                ))}
+              </select>
               {errors.courses && (
                 <div className="error-message">{errors.courses}</div>
               )}
@@ -651,14 +718,17 @@ const LoginSignup = () => {
 
                   <div className="input">
                     <label htmlFor="region">Region</label>
-                    <input
-                      type="text"
-                      id="region"
+                    <Select
+                      id="timezone"
                       name="region"
-                      className="textfield"
-                      placeholder="Enter your region"
-                      value={formData.region || ""}
-                      onChange={handleInputChange}
+                      className={`textfield ${errors.region ? "error" : ""}`}
+                      options={options}
+                      value={options.find(
+                        (opt) => opt.value === formData.region
+                      )}
+                      onChange={handleTimezoneChange}
+                      placeholder="Choose a timezone/region"
+                      isSearchable
                     />
                   </div>
                   <div className="input">
@@ -812,7 +882,7 @@ const LoginSignup = () => {
                     phone: "",
                     address: "",
                     qualification: "",
-                    experience: "",
+                    hourlyrate: "",
                     courses: "",
                     // studentGrade: "",
                     parentOf: "",
