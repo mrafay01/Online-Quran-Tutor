@@ -44,15 +44,11 @@ const LoginSignup = () => {
     gender: "",
     pic: "",
     dob: "",
-    phone: "",
-    address: "",
     qualification: "", // For teachers
     hourlyrate: "", // For teachers
     courses: "", // For teachers
     // studentGrade: "", // For students
     parentOf: "", // For parents
-    usernameSuffix: "",
-    spic: "",
     cnic: "",
   });
 
@@ -106,8 +102,6 @@ const LoginSignup = () => {
         newErrors.confirmPassword = "Passwords do not match";
       }
       if (!formData.dob) newErrors.dob = "Date of birth is required";
-      if (!formData.phone) newErrors.phone = "Phone number is required";
-      if (!formData.address) newErrors.address = "Address is required";
     }
 
     // username validation
@@ -184,11 +178,11 @@ const LoginSignup = () => {
         const payload = {
           name: formData.firstName + " " + formData.lastName,
           dob: formData.dob,
-          username: `${selectedRole}_${formData.usernameSuffix}`,
+          username: formData.username,
           region: formData.region,
           password: formData.password,
           gender: formData.gender[0],
-          spic: formData.spic,
+          pic: formData.pic,
         };
 
         const response = await fetch("http://localhost:5000/SignUpStudents", {
@@ -221,7 +215,7 @@ const LoginSignup = () => {
           name: formData.firstName + " " + formData.lastName,
           region: formData.region,
           cnic: formData.cnic,
-          username: `parent_${formData.usernameSuffix}`,
+          username: formData.username,
           password: formData.password,
           student_username: formData.parentOf,
         };
@@ -253,12 +247,13 @@ const LoginSignup = () => {
       // TEACHER
       else if (selectedRole === "teacher" && action === "Sign Up") {
         const payload = {
+          pic: formData.pic,
           name: formData.firstName + " " + formData.lastName,
           region: formData.region,
           cnic: formData.cnic,
           dob: formData.dob,
           hourlyrate: formData.hourlyrate,
-          username: `teacher_${formData.usernameSuffix}`,
+          username: formData.username,
           password: formData.password,
           qualification: formData.qualification,
           courses: formData.courses,
@@ -488,14 +483,14 @@ const LoginSignup = () => {
               </select>
             </div>
             <div className="input">
-              <label htmlFor="spic">Profile Image URL</label>
+              <label htmlFor="pic">Profile Image URL</label>
               <input
                 type="text"
-                id="spic"
-                name="spic"
+                id="pic"
+                name="pic"
                 className="textfield"
                 placeholder="Enter image URL"
-                value={formData.spic || ""}
+                value={formData.pic || ""}
                 onChange={handleInputChange}
               />
             </div> */}
@@ -550,6 +545,20 @@ const LoginSignup = () => {
         );
       default:
         return null;
+    }
+  };
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setFormData((prev) => ({
+          ...prev,
+          pic: reader.result, // base64 string
+        }));
+      };
+      reader.readAsDataURL(file);
     }
   };
 
@@ -624,19 +633,10 @@ const LoginSignup = () => {
                   id="username"
                   name="username"
                   className={`textfield ${errors.username ? "error" : ""}`}
-                  value={`${selectedRole}_` + (formData.usernameSuffix || "")}
-                  onChange={(e) => {
-                    const input = e.target.value;
-                    const prefix = `${selectedRole}_`;
-                    if (input.startsWith(prefix)) {
-                      setFormData({
-                        ...formData,
-                        usernameSuffix: input.slice(prefix.length),
-                      });
-                    }
-                  }}
+                  value={formData.username}
+                  onChange={handleInputChange}
                   required
-                  placeholder={`${selectedRole}_yourname`}
+                  placeholder="username"
                 />
                 {errors.username && (
                   <div className="error-message">{errors.username}</div>
@@ -646,7 +646,7 @@ const LoginSignup = () => {
               {action === "Sign Up" && (
                 <>
                   {/* Phone */}
-                  <div className="input">
+                  {/* <div className="input">
                     <label htmlFor="phone">
                       <Phone size={18} className="input-icon" />
                       Phone Number
@@ -664,7 +664,7 @@ const LoginSignup = () => {
                     {errors.phone && (
                       <div className="error-message">{errors.phone}</div>
                     )}
-                  </div>
+                  </div> */}
 
                   {/* Date of Birth */}
                   <div className="input">
@@ -696,7 +696,7 @@ const LoginSignup = () => {
                   </div>
 
                   {/* Address */}
-                  <div className="input">
+                  {/* <div className="input">
                     <label htmlFor="address">
                       <MapPin size={18} className="input-icon" />
                       Address
@@ -714,7 +714,7 @@ const LoginSignup = () => {
                     {errors.address && (
                       <div className="error-message">{errors.address}</div>
                     )}
-                  </div>
+                  </div> */}
 
                   <div className="input">
                     <label htmlFor="region">Region</label>
@@ -746,16 +746,24 @@ const LoginSignup = () => {
                     </select>
                   </div>
                   <div className="input">
-                    <label htmlFor="spic">Profile Image URL</label>
-                    <input
-                      type="text"
-                      id="spic"
-                      name="spic"
-                      className="textfield"
-                      placeholder="Enter image URL"
-                      value={formData.spic || ""}
-                      onChange={handleInputChange}
-                    />
+                    <label htmlFor="pic">Profile Image</label>
+                    <div className="profile-image-picker">
+                      <input
+                        type="file"
+                        id="pic"
+                        name="pic"
+                        accept="image/*"
+                        className="profile-image-input"
+                        onChange={handleImageChange}
+                      />
+                      {formData.pic && (
+                        <img
+                          src={formData.pic}
+                          alt="Profile Preview"
+                          className="profile-image-preview"
+                        />
+                      )}
+                    </div>
                   </div>
 
                   {/* Role-specific fields */}
@@ -879,8 +887,6 @@ const LoginSignup = () => {
                     password: "",
                     confirmPassword: "",
                     dob: "",
-                    phone: "",
-                    address: "",
                     qualification: "",
                     hourlyrate: "",
                     courses: "",
@@ -888,7 +894,7 @@ const LoginSignup = () => {
                     parentOf: "",
                     region: "",
                     gender: "",
-                    spic: "",
+                    pic: "",
                     student_username: "",
                     cnic: "",
                   });
