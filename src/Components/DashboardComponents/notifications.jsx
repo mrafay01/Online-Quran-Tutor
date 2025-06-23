@@ -2,7 +2,7 @@
 
 import Sidebar from "./Sidebar";
 import {useRef, useEffect, useState } from "react";
-import AvatarImg from "../Assets/Images/boy-avatar.png";
+import AvatarImg from './../Assets/Images/boy-avatar.png';
 import {
   Clock,
   Menu,
@@ -19,7 +19,7 @@ import {
   Bell,
   Book,
 } from "lucide-react";
-import "./dashboard.css";
+import './dashboard.css';
 
 // Mock data for notifications
 const mockNotifications = [

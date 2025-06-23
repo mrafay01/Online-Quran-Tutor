@@ -1,8 +1,9 @@
 "use client";
 
-import Sidebar from "./Sidebar";
-import AvatarImg from "../Assets/Images/boy-avatar.png";
-import { useState } from "react";
+import Sidebar from "../Sidebar";
+import AvatarImg from '../../Assets/Images/boy-avatar.png';
+import { useState, useEffect } from "react";
+import { useParams } from 'react-router-dom';
 import {
   Book,
   Bell,
@@ -23,68 +24,42 @@ import {
   Trash2,
   Video,
 } from "lucide-react";
-import "./dashboard.css";
-
-// Mock data for schedule
-const mockSchedule = [
-  {
-    id: 1,
-    title: "Tajweed Rules Session",
-    teacher: "Sheikh Abdullah",
-    date: "2024-06-03",
-    time: "16:30",
-    duration: 45,
-    type: "Live Session",
-    status: "upcoming",
-    meetingLink: "https://meet.example.com/abc123",
-  },
-  {
-    id: 2,
-    title: "Surah Al-Baqarah Recitation",
-    teacher: "Sheikh Mahmoud",
-    date: "2024-06-04",
-    time: "17:00",
-    duration: 60,
-    type: "Live Session",
-    status: "upcoming",
-    meetingLink: "https://meet.example.com/def456",
-  },
-  {
-    id: 3,
-    title: "Memorization Practice",
-    teacher: "Sheikh Yusuf",
-    date: "2024-06-05",
-    time: "18:00",
-    duration: 45,
-    type: "Practice Session",
-    status: "upcoming",
-    meetingLink: "https://meet.example.com/ghi789",
-  },
-  {
-    id: 4,
-    title: "Arabic Grammar Review",
-    teacher: "Sheikh Omar",
-    date: "2024-06-01",
-    time: "15:00",
-    duration: 60,
-    type: "Live Session",
-    status: "completed",
-    meetingLink: null,
-  },
-];
+import '../dashboard.css';
 
 const SchedulePage = () => {
+  const { username, role } = useParams();
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [activeSection, setActiveSection] = useState("schedule");
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewMode, setViewMode] = useState("week"); // week, month
+  const [scheduleData, setScheduleData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    if (!username || !role) return;
+    setLoading(true);
+    fetch(`http://localhost:5000/Get${role.charAt(0).toUpperCase() + role.slice(1)}Schedule?username=${username}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.error) setError(data.error);
+        else setScheduleData(data);
+        setLoading(false);
+      })
+      .catch(err => {
+        setError("Failed to fetch schedule data");
+        setLoading(false);
+      });
+  }, [username, role]);
 
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
   };
-  const mockUser = {
-    name: "Ahmad Hassan",
-    role: "Student",
+
+  // Create userInfo object from URL params and fetched data
+  const userInfo = {
+    name: scheduleData[0]?.userName || username,
+    role: role,
     avatar: AvatarImg,
   };
 
@@ -120,7 +95,7 @@ const SchedulePage = () => {
 
   const getSessionsForDate = (date) => {
     const dateStr = date.toISOString().split("T")[0];
-    return mockSchedule.filter((session) => session.date === dateStr);
+    return scheduleData.filter((session) => session.date === dateStr);
   };
 
   const navigateWeek = (direction) => {
@@ -128,6 +103,10 @@ const SchedulePage = () => {
     newDate.setDate(currentDate.getDate() + direction * 7);
     setCurrentDate(newDate);
   };
+
+  if (loading) return <div className="loading">Loading schedule data...</div>;
+  if (error) return <div className="error">{error}</div>;
+  if (!scheduleData.length) return <div className="no-data">No schedule data found.</div>;
 
   return (
     <div className="dashboard-container">
@@ -137,7 +116,7 @@ const SchedulePage = () => {
         onToggle={toggleSidebar}
         activeSection={activeSection}
         onSectionChange={handleSectionChange}
-        userInfo={mockUser}
+        userInfo={userInfo}
         unreadNotifications={5}
       />
 
@@ -177,19 +156,19 @@ const SchedulePage = () => {
           <div className="schedule-stats">
             <div className="stat-card">
               <div className="stat-number">
-                {mockSchedule.filter((s) => s.status === "upcoming").length}
+                {scheduleData.filter((s) => s.status === "upcoming").length}
               </div>
               <div className="stat-label">Upcoming Sessions</div>
             </div>
             <div className="stat-card">
               <div className="stat-number">
-                {mockSchedule.filter((s) => s.status === "completed").length}
+                {scheduleData.filter((s) => s.status === "completed").length}
               </div>
               <div className="stat-label">Completed This Week</div>
             </div>
             <div className="stat-card">
               <div className="stat-number">
-                {mockSchedule.reduce(
+                {scheduleData.reduce(
                   (acc, session) => acc + session.duration,
                   0
                 )}
@@ -220,72 +199,22 @@ const SchedulePage = () => {
                     >
                       <div className="session-time">{session.time}</div>
                       <div className="session-title">{session.title}</div>
-                      <div className="session-teacher">{session.teacher}</div>
-                      <div className="session-duration">
-                        {session.duration} min
-                      </div>
-                      <div className="session-actions">
-                        {session.status === "upcoming" &&
-                          session.meetingLink && (
-                            <button className="join-btn">
-                              <Video size={14} />
-                              Join
-                            </button>
-                          )}
-                        <button className="edit-btn">
-                          <Edit size={14} />
-                        </button>
-                      </div>
+                      <div className="session-teacher">👨‍🏫 {session.teacher}</div>
+                      <div className="session-duration">{session.duration} min</div>
+                      {session.meetingLink && (
+                        <a
+                          href={session.meetingLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="join-btn"
+                        >
+                          Join Session
+                        </a>
+                      )}
                     </div>
                   ))}
                 </div>
               ))}
-            </div>
-          </div>
-
-          {/* Upcoming Sessions List */}
-          <div className="upcoming-sessions">
-            <h3>Upcoming Sessions</h3>
-            <div className="sessions-list">
-              {mockSchedule
-                .filter((session) => session.status === "upcoming")
-                .map((session) => (
-                  <div key={session.id} className="session-item">
-                    <div className="session-info">
-                      <h4>{session.title}</h4>
-                      <p className="session-details">
-                        <User size={14} /> {session.teacher} •
-                        <Calendar size={14} />{" "}
-                        {new Date(session.date).toLocaleDateString()} •
-                        <Clock size={14} /> {session.time} ({session.duration}{" "}
-                        min)
-                      </p>
-                      <span
-                        className={`session-type ${session.type
-                          .toLowerCase()
-                          .replace(" ", "-")}`}
-                      >
-                        {session.type}
-                      </span>
-                    </div>
-                    <div className="session-actions">
-                      {session.meetingLink && (
-                        <button className="join-btn">
-                          <Video size={16} />
-                          Join Session
-                        </button>
-                      )}
-                      <button className="reschedule-btn">
-                        <Edit size={16} />
-                        Reschedule
-                      </button>
-                      <button className="cancel-btn">
-                        <Trash2 size={16} />
-                        Cancel
-                      </button>
-                    </div>
-                  </div>
-                ))}
             </div>
           </div>
         </div>

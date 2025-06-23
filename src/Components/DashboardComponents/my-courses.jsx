@@ -1,7 +1,7 @@
 "use client";
 
 import Sidebar from "./Sidebar";
-import AvatarImg from "../Assets/Images/boy-avatar.png";
+import AvatarImg from './../Assets/Images/boy-avatar.png';
 import { useState } from "react";
 import {
   Book,
@@ -23,7 +23,7 @@ import {
   Star,
   Search,
 } from "lucide-react";
-import "./dashboard.css";
+import './dashboard.css';
 
 // Mock data for courses
 const mockCourses = [

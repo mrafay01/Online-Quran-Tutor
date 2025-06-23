@@ -92,7 +92,6 @@ const LoginSignup = () => {
   const validateForm = () => {
     const newErrors = {};
 
-    // Basic validation
     if (action === "Sign Up") {
       if (!formData.firstName.trim())
         newErrors.firstName = "First name is required";
@@ -102,6 +101,16 @@ const LoginSignup = () => {
         newErrors.confirmPassword = "Passwords do not match";
       }
       if (!formData.dob) newErrors.dob = "Date of birth is required";
+      if (!formData.password) {
+        newErrors.password = "Password is required";
+      } else if (formData.password.length < 8) {
+        newErrors.password = "Password must be at least 8 characters";
+      }
+    } else if (action === "Login") {
+      if (!formData.username) newErrors.username = "Username is required";
+      if (!formData.password) {
+        newErrors.password = "Password is required";
+      }
     }
 
     // username validation
@@ -126,20 +135,11 @@ const LoginSignup = () => {
     //   }
     // }
 
-    // Password validation
-    if (!formData.password) {
-      newErrors.password = "Password is required";
-    } else if (formData.password.length < 8) {
-      newErrors.password = "Password must be at least 8 characters";
-    }
-
     // Role-specific validation
-    if (selectedRole === "teacher") {
+    if (action === "Sign Up" && selectedRole === "teacher") {
       if (!formData.qualification)
         newErrors.qualification = "Qualification is required";
-      if (!formData.hourlyrate) newErrors.hourlyrate = "hourlyrate is required";
-      if (!formData.courses) newErrors.courses = "courses are required";
-    } else if (selectedRole === "parent") {
+    } else if (action === "Sign Up" && selectedRole === "parent") {
       if (!formData.parentOf)
         newErrors.parentOf = "Student username is required";
       if (!formData.cnic) newErrors.cnic = "CNIC is required";
@@ -163,9 +163,14 @@ const LoginSignup = () => {
   };
 
   const handleSubmit = async (e) => {
+    console.log("Form submitted!");
     e.preventDefault();
+    console.log("Selected role:", selectedRole);
+    console.log("ACTIONNNN:", action);
+    
 
     if (!validateForm()) {
+      console.log("Validation failed:", errors, formData);
       return;
     }
 
@@ -206,7 +211,7 @@ const LoginSignup = () => {
 
         // Success
         alert("Account created successfully!");
-        navigate(`/${payload.username}/dashboard`);
+        navigate(`/${selectedRole}/${payload.username}/dashboard`);
       }
 
       // PARENT
@@ -241,7 +246,7 @@ const LoginSignup = () => {
 
         // Success
         alert("Account created successfully!");
-        navigate(`/${payload.username}/dashboard`);
+        navigate(`/${selectedRole}/${payload.username}/dashboard`);
       }
 
       // TEACHER
@@ -250,13 +255,12 @@ const LoginSignup = () => {
           pic: formData.pic,
           name: formData.firstName + " " + formData.lastName,
           region: formData.region,
+          gender: formData.gender[0],
           cnic: formData.cnic,
           dob: formData.dob,
-          hourlyrate: formData.hourlyrate,
           username: formData.username,
           password: formData.password,
           qualification: formData.qualification,
-          courses: formData.courses,
         };
 
         const response = await fetch("http://localhost:5000/SignupTeacher", {
@@ -280,24 +284,40 @@ const LoginSignup = () => {
 
         // Success
         alert("Account created successfully!");
-        navigate(`/${payload.username}/dashboard`);
-      } else {
-        // Simulate API call
-        await new Promise((resolve) => setTimeout(resolve, 1500));
-        console.log("Form submitted:", {
-          ...formData,
-          role: selectedRole,
-          rememberMe,
+        navigate(`/teacher-extra?username=${encodeURIComponent(payload.username)}`);
+      }
+
+      // LOGIN LOGIC
+      else if (action === "Login") {
+        console.log("LOGIN ACTION")
+
+        let endpoint = "";
+        if (selectedRole === "student") endpoint = "/LoginStudent";
+        else if (selectedRole === "teacher") endpoint = "/LoginTeacher";
+        else if (selectedRole === "parent") endpoint = "/LoginParent";
+
+        const payload = {
+          username: formData.username,
+          password: formData.password,
+        };
+
+        const response = await fetch(`http://localhost:5000${endpoint}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
         });
 
-        navigate(`/${formData.username}/dashboard`);
+        if (!response.ok) {
+          setErrors({ form: "Invalid username or password." });
+          setIsLoading(false);
+          return;
+        }
 
-        // Show success message
-        alert(
-          action === "Login"
-            ? "Login successful!"
-            : "Account created successfully!"
-        );
+        // Success
+        alert("Login successful!");
+        navigate(`/${selectedRole}/${formData.username}/dashboard`);
+        setIsLoading(false);
+        return;
       }
     } catch (error) {
       console.error("Error submitting form:", error);
@@ -310,13 +330,13 @@ const LoginSignup = () => {
   const renderPasswordStrength = () => {
     const getColor = () => {
       if (passwordStrength <= 1) return "#ff4d4d";
-      if (passwordStrength <= 3) return "#ffaa00";
+      if (passwordStrength <= 2) return "#ffaa00";
       return "#00cc44";
     };
 
     const getLabel = () => {
       if (passwordStrength <= 1) return "Weak";
-      if (passwordStrength <= 3) return "Medium";
+      if (passwordStrength <= 2) return "Medium";
       return "Strong";
     };
 
@@ -384,54 +404,18 @@ const LoginSignup = () => {
                 <div className="error-message">{errors.qualification}</div>
               )}
             </div>
-            <div className="input">
-              <label htmlFor="hourlyrate">
-                <BiMoney size={18} className="input-icon" />
-                Mention your hourlyrate
-              </label>
-              <select
-                id="hourlyrate"
-                name="hourlyrate"
-                className={`textfield ${errors.hourlyrate ? "error" : ""}`}
-                value={formData.hourlyrate}
-                onChange={handleInputChange}
-                isSearchable
-              >
-                <option value="">Select hourly rate</option>
-                {Array.from({ length: 14 }, (_, i) => i + 2).map((rate) => (
-                  <option key={rate} value={rate}>
-                    ${rate}
-                  </option>
-                ))}
-              </select>
 
-              {errors.hourlyrate && (
-                <div className="error-message">{errors.hourlyrate}</div>
-              )}
-            </div>
             <div className="input">
-              <label htmlFor="courses">
-                <BookOpen size={18} className="input-icon" />
-                courses You Can Teach
-              </label>
-              <select
+              <label htmlFor="cnic">CNIC</label>
+              <input
                 type="text"
-                id="courses"
-                name="courses"
-                className={`textfield ${errors.courses ? "error" : ""}`}
-                value={formData.courses}
+                id="cnic"
+                name="cnic"
+                className="textfield"
+                placeholder="Enter your CNIC"
+                value={formData.cnic || ""}
                 onChange={handleInputChange}
-              >
-                <option value="">Select Courses</option>
-                {["Nazra", "Tajweed", "Hifz", "Qiraat"].map((course) => (
-                  <option key={course} value={course}>
-                    {course}
-                  </option>
-                ))}
-              </select>
-              {errors.courses && (
-                <div className="error-message">{errors.courses}</div>
-              )}
+              />
             </div>
           </>
         );

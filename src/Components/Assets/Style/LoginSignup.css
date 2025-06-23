@@ -651,3 +651,54 @@ input[type="date"]:focus {
 .input label:hover {
   color: #5c724a;
 }
+
+.profile-video-picker {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-top: 8px;
+}
+
+.profile-video-input {
+  padding: 10px 0;
+  background: none;
+  border: none;
+  font-size: 1rem;
+  color: #3d4d30;
+}
+
+.profile-video-input::-webkit-file-upload-button {
+  background: #5c724a;
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  padding: 10px 22px;
+  font-size: 1rem;
+  font-family: "Alata", sans-serif;
+  cursor: pointer;
+  transition: background 0.3s, box-shadow 0.3s;
+  box-shadow: 0 2px 8px rgba(92, 114, 74, 0.08);
+}
+
+.profile-video-input::-webkit-file-upload-button:hover {
+  background: #3d4d30;
+  box-shadow: 0 4px 16px rgba(92, 114, 74, 0.15);
+}
+
+.profile-video-preview {
+  width: 90px;
+  height: 64px;
+  border-radius: 16px;
+  object-fit: cover;
+  border: 2.5px solid #b5b580;
+  box-shadow: 0 2px 8px rgba(92, 114, 74, 0.10);
+  background: #f6f6e6;
+  margin-left: 8px;
+  transition: border-color 0.3s, box-shadow 0.3s, transform 0.2s;
+}
+
+.profile-video-preview:hover {
+  border-color: #5c724a;
+  box-shadow: 0 6px 18px rgba(92, 114, 74, 0.18);
+  transform: scale(1.05);
+}

@@ -1,0 +1,174 @@
+.max-teacher-detail-card {
+    background: var(--white);
+    padding: 24px;
+    border-radius: 16px;
+    box-shadow: var(--shadow);
+    width: 100%;
+    max-width: unset;
+    margin: 0 auto;
+  }
+  
+  .max-teacher-card {
+    background: #fff;
+    border-radius: 18px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.07), 0 1.5px 6px rgba(0,0,0,0.03);
+    padding: 2rem 2rem 1.5rem 2rem;
+    margin: 0 auto;
+    margin-top: 32px;
+    max-width: 900px;
+  }
+  
+  .max-teacher-detail-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 24px;
+    gap: 20px;
+  }
+  
+  .max-teacher-detail-avatar {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #e6f7e6;
+  }
+  
+  .max-teacher-detail-info {
+    margin-left: 24px;
+  }
+  
+  .teacher-bio-fallback {
+    color: #aaa;
+    font-style: italic;
+  }
+  
+  .teacher-location,
+  .teacher-meta,
+  .teacher-rating-value {
+    font-size: 0.9rem;
+    color: var(--text-light);
+    margin: 4px 0;
+  }
+  
+  .teacher-rating-stars {
+    color: #ffa500;
+    margin-right: 8px;
+  }
+  
+  .teacher-bio {
+    font-size: 0.95rem;
+    margin: 18px 0;
+    line-height: 1.6;
+    color: var(--primary-dark);
+  }
+  
+  .teacher-info-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    font-size: 0.9rem;
+    margin-bottom: 18px;
+    color: var(--primary-dark);
+  }
+  
+  .teacher-info-row span {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  
+  .teacher-extra-info {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 12px;
+    color: var(--primary-dark);
+    font-size: 0.9rem;
+  }
+  
+  /* Weekly Schedule */
+  .weekly-schedule-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 16px;
+    margin-bottom: 16px;
+    max-width: 100%;
+  }
+  
+  .slot-button {
+    min-width: 120px;
+    padding: 0.4rem 0.7rem;
+    border: 1px solid #d3d3d3;
+    border-radius: 8px;
+    background: #f7f7f7;
+    color: #444;
+    font-size: 0.98rem;
+    margin: 2px;
+    cursor: pointer;
+    transition: background 0.18s, color 0.18s, border 0.18s, transform 0.18s;
+    outline: none;
+    box-shadow: none;
+  }
+  
+  .slot-button:hover:not(:disabled) {
+    background: #e6f7e6;
+    color: #2d4a2d;
+    border-color: #b6e2b6;
+    transform: scale(1.04);
+  }
+  
+  .slot-button.selected {
+    background: #4a5c2c;
+    color: #fff;
+    border-color: #4a5c2c;
+    font-weight: 600;
+  }
+  
+  .slot-button:disabled {
+    background: #f0f0f0;
+    color: #bbb;
+    border-color: #e0e0e0;
+    cursor: not-allowed;
+    opacity: 0.7;
+  }
+  
+  /* Responsive */
+  @media (max-width: 900px) {
+    .max-teacher-card {
+      padding: 1.2rem 0.5rem 1rem 0.5rem;
+    }
+  
+    .weekly-schedule-grid {
+      gap: 4px;
+    }
+  
+    .slot-button {
+      min-width: 90px;
+      font-size: 0.92rem;
+      padding: 0.3rem 0.5rem;
+    }
+  }
+  
+  @media (max-width: 600px) {
+    .max-teacher-card {
+      padding: 0.7rem 0.2rem 0.7rem 0.2rem;
+    }
+  
+    .max-teacher-detail-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 12px;
+    }
+  
+    .max-teacher-detail-info {
+      margin-left: 0;
+    }
+  
+    .slot-button {
+      min-width: 80px;
+      font-size: 0.85rem;
+      padding: 0.2rem 0.3rem;
+    }
+  }
+  
