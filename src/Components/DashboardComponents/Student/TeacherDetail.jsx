@@ -23,6 +23,9 @@ const TeacherDetail = () => {
   const [showModal, setShowModal] = useState(false);
   const [schedule, setSchedule] = useState([]);
   const [selectedSlots, setSelectedSlots] = useState([]);
+  const [selectedCourse, setSelectedCourse] = useState("");
+  const [enrolledCourses, setEnrolledCourses] = useState([]);
+  const [successModal, setSuccessModal] = useState(false);
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -60,6 +63,7 @@ const TeacherDetail = () => {
         return res.json();
       })
       .then((data) => {
+        console.log('Fetched teacher data:', data);
         setTeacher(data);
         setSchedule(Array.isArray(data.schedule) ? data.schedule : []);
         setLoading(false);
@@ -70,49 +74,71 @@ const TeacherDetail = () => {
       });
   }, [teacher_username]);
 
-  const toggleSlot = (slot) => {
-    const normalizedSlot = {
-      day: slot.day.slice(0, 3), // normalize to Mon, Tue, etc.
-      hour: Number(slot.hour),
-    };
+  useEffect(() => {
+    if (!student_username) return;
+    fetch(`http://localhost:5000/GetStudentCourses?username=${student_username}`)
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data.courses)) {
+          setEnrolledCourses(data.courses.map(c => String(c.id || c.courseId)));
+        }
+      })
+      .catch(err => {
+        setEnrolledCourses([]);
+      });
+  }, [student_username]);
 
+  const toggleSlot = (slotObj) => {
+    console.log('toggleSlot called with:', slotObj);
+    if (!slotObj || !slotObj.slotId) return;
     setSelectedSlots((prev) =>
-      prev.some((s) => s.day === normalizedSlot.day && s.hour === normalizedSlot.hour)
-        ? prev.filter((s) => !(s.day === normalizedSlot.day && s.hour === normalizedSlot.hour))
-        : [...prev, normalizedSlot]
+      prev.includes(slotObj.slotId)
+        ? prev.filter((id) => id !== slotObj.slotId)
+        : [...prev, slotObj.slotId]
     );
   };
 
   const handleHire = () => {
-
-    const selectedSlotIds = selectedSlots.map(slot => {
-      // ... your mapping logic ...
-    }).filter(Boolean);
-
-    console.log('POST body:', {
-      teacherId: teacher.id,
-      courseId: courseId,
-      selectedSchedule: selectedSlotIds
-    });
-
-    // Now use courseId in your POST body
+    setHiring(true);
     fetch(`http://localhost:5000/api/students/${student_username}/hire`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         teacherId: teacher.id,
-        courseId: courseId,
-        selectedSchedule: selectedSlotIds
+        courseId: selectedCourse,
+        selectedSchedule: selectedSlots
       })
     })
-    // ...rest of your code
+      .then((res) => {
+        setHiring(false);
+        setShowModal(false);
+        setSuccessModal(true);
+        // Optionally clear selected slots/courses here
+      })
+      .catch((err) => {
+        setHiring(false);
+        setShowModal(false);
+        alert('Failed to send request. Please try again.');
+      });
   };
   
 
   const openModal = () => setShowModal(true);
   const closeModal = () => setShowModal(false);
 
-  const hours = Array.from({ length: 24 }, (_, i) => i); // 0–23
+  console.log('schedule:', schedule);
+  console.log('selectedSlots:', selectedSlots);
+  console.log('selectedCourse:', selectedCourse);
+
+  // Group slots by day
+  const slotsByDay = days.reduce((acc, dayShort) => {
+    const dayFull = shortToFullDay[dayShort];
+    acc[dayShort] = schedule.filter(slot => (slot.day && (slot.day === dayFull || slot.day.toLowerCase() === dayFull.toLowerCase())));
+    return acc;
+  }, {});
+
+  // Get all unique times across all days
+  const allTimes = Array.from(new Set(schedule.map(slot => slot.time))).sort();
 
   return (
     <div className="dashboard-container">
@@ -188,6 +214,35 @@ const TeacherDetail = () => {
                 </span>
               </div>
 
+              <div className="courses-section">
+                <h3 style={{ marginTop: 24, marginBottom: 12 }}>Select Course</h3>
+                <div className="courses-radio-group">
+                  {Array.isArray(teacher.courses) && teacher.courses.length > 0 ? (
+                    teacher.courses.map((course) => {
+                      const isEnrolled = enrolledCourses.includes(String(course.id));
+                      return (
+                        <label key={course.id} className={`custom-radio-label${selectedCourse === String(course.id) ? " selected" : ""}${isEnrolled ? " disabled" : ""}`}>
+                          <input
+                            type="radio"
+                            name="course"
+                            value={course.id}
+                            checked={selectedCourse === String(course.id)}
+                            onChange={() => setSelectedCourse(String(course.id))}
+                            className="custom-radio-input"
+                            disabled={isEnrolled}
+                          />
+                          <span className="custom-radio-check" />
+                          {course.name}
+                          {isEnrolled && <span className="enrolled-indicator">Already Enrolled</span>}
+                        </label>
+                      );
+                    })
+                  ) : (
+                    <span className="no-courses">No courses available.</span>
+                  )}
+                </div>
+              </div>
+
               {(teacher.qualification || teacher.experience) && (
                 <div className="teacher-extra-info">
                   {teacher.qualification && (
@@ -203,36 +258,32 @@ const TeacherDetail = () => {
                 </div>
               )}
 
-              <h3 style={{ marginTop: 32 }}>Select Weekly Schedule (1 hour slots, 24-hour format)</h3>
-              <div className="schedule-table">
+              <h3 style={{ marginTop: 32 }}>Select Weekly Schedule (Available Slots)</h3>
+              <div className="schedule-table schedule-grid-table">
                 <div className="schedule-header">
                   <div className="schedule-cell schedule-time-header">Time</div>
-                  {days.map((day) => (
-                    <div key={day} className="schedule-cell schedule-day-header">
-                      {day}
-                    </div>
+                  {days.map(day => (
+                    <div key={day} className="schedule-cell schedule-day-header">{day}</div>
                   ))}
                 </div>
-                {hours.map((hour) => (
-                  <div className="schedule-row" key={hour}>
-                    <div className="schedule-cell schedule-time">
-                      {`${hour.toString().padStart(2, "0")}:00 - ${(hour + 1).toString().padStart(2, "0")}:00`}
-                    </div>
-                    {days.map((day) => {
-                      const slot = { day, hour };
-                      const isDisabled = schedule.some(
-                        (s) => s.day.slice(0, 3) === day && s.hour === hour && s.isBooked
-                      );
-                      const isSelected = selectedSlots.some((s) => s.day === day && s.hour === hour);
+                {allTimes.map(time => (
+                  <div className="schedule-row" key={time}>
+                    <div className="schedule-cell schedule-time">{time}</div>
+                    {days.map(dayShort => {
+                      const slotObj = (slotsByDay[dayShort] || []).find(slot => slot.time === time);
+                      const isSelected = slotObj && selectedSlots.includes(slotObj.slotId);
+                      const isDisabled = slotObj && slotObj.isBooked === true;
                       return (
-                        <div className="schedule-cell" key={day + hour}>
-                          <input
-                            type="checkbox"
-                            className={`schedule-checkbox${isSelected ? " selected" : ""}`}
-                            checked={isSelected}
-                            disabled={isDisabled}
-                            onChange={() => toggleSlot(slot)}
-                          />
+                        <div className="schedule-cell" key={dayShort + time}>
+                          {slotObj ? (
+                            <input
+                              type="checkbox"
+                              className={`schedule-checkbox${isSelected ? " selected" : ""}`}
+                              checked={isSelected}
+                              disabled={isDisabled}
+                              onChange={() => toggleSlot(slotObj)}
+                            />
+                          ) : null}
                         </div>
                       );
                     })}
@@ -244,7 +295,7 @@ const TeacherDetail = () => {
                 <button
                   className="btn btn-primary"
                   onClick={openModal}
-                  disabled={hiring || selectedSlots.length === 0}
+                  disabled={hiring || selectedSlots.length === 0 || !selectedCourse}
                 >
                   {hiring ? "Hiring..." : "Hire Teacher"}
                 </button>
@@ -255,15 +306,17 @@ const TeacherDetail = () => {
                   <div className="modal-box">
                     <h3>Confirm Hire</h3>
                     <p>
-                      Are you sure you want to hire <b>{teacher.name}</b> with the selected schedule?
+                      Are you sure you want to hire <b>{teacher.name}</b> for <b>{teacher.courses && teacher.courses.find(c => String(c.id) === selectedCourse)?.name || ""}</b> with the selected schedule?
                     </p>
                     <ul>
-                      {selectedSlots.map((slot) => (
-                        <li key={`${slot.day}-${slot.hour}`}>
-                          {slot.day} {slot.hour.toString().padStart(2, "0")}:00 -{" "}
-                          {(slot.hour + 1).toString().padStart(2, "0")}:00
-                        </li>
-                      ))}
+                      {selectedSlots.map((slotId) => {
+                        const slot = schedule.find(s => s.slotId === slotId);
+                        return (
+                          <li key={slotId}>
+                            {slot ? `${slot.day} ${slot.time}` : `Slot ID: ${slotId}`}
+                          </li>
+                        );
+                      })}
                     </ul>
                     <div className="modal-actions">
                       <button className="btn btn-primary" onClick={handleHire} disabled={hiring}>
@@ -271,6 +324,19 @@ const TeacherDetail = () => {
                       </button>
                       <button className="btn btn-secondary" onClick={closeModal} disabled={hiring}>
                         Cancel
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+              {successModal && (
+                <div className="modal-overlay">
+                  <div className="modal-box">
+                    <h3>Request Sent</h3>
+                    <p>Your hire request has been sent successfully!</p>
+                    <div className="modal-actions">
+                      <button className="btn btn-primary" onClick={() => setSuccessModal(false)}>
+                        OK
                       </button>
                     </div>
                   </div>

@@ -1,0 +1,78 @@
+.slots-title {
+  margin: 0 0 24px 0;
+  font-weight: 700;
+  color: #2d4a2d;
+  font-size: 1.3rem;
+  text-align: center;
+}
+
+.slots-list-wrapper {
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+.slot-card {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+  padding: 18px;
+  margin-bottom: 18px;
+  display: flex;
+  flex-direction: column;
+  border-left: 6px solid #4a5c2c;
+  transition: box-shadow 0.18s;
+}
+
+.slot-card:hover {
+  box-shadow: 0 4px 16px rgba(74,92,44,0.13);
+}
+
+.slot-course {
+  font-weight: 600;
+  font-size: 1.1em;
+  color: #2d4a2d;
+}
+
+.slot-teacher {
+  color: #666;
+  font-size: 0.98em;
+  margin-bottom: 4px;
+}
+
+.slot-details {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-top: 6px;
+}
+
+.slot-day {
+  font-weight: 500;
+  color: #4a5c2c;
+}
+
+.slot-time {
+  font-weight: 500;
+}
+
+.slot-next {
+  color: #888;
+  font-size: 0.97em;
+}
+
+.slots-empty {
+  color: #888;
+  margin-bottom: 16px;
+  text-align: center;
+}
+
+@media (max-width: 900px) {
+  .slots-list-wrapper {
+    max-width: 98vw;
+    padding: 0 8px;
+  }
+  .slot-card {
+    padding: 12px;
+  }
+} 
