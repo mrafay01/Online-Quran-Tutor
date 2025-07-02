@@ -41,6 +41,7 @@ const Slots = () => {
         return res.json();
       })
       .then(data => {
+        console.log('Fetched schedule data:', data.schedule);
         setSchedule(Array.isArray(data.schedule) ? data.schedule : []);
         setLoading(false);
       })
@@ -54,37 +55,31 @@ const Slots = () => {
   if (error) return <div style={{ color: 'red' }}>Error: {error}</div>;
   if (!schedule.length) return <div>No slots found.</div>;
 
-  let allSlots = [];
-  if (role.toLowerCase() === "student") {
-    // For students, flatten all slots from all courses
-    schedule.forEach(course => {
-      (course.slots || []).forEach(slot => {
-        allSlots.push({
-          ...slot,
-          courseName: course.courseName,
-          teacherName: course.teacherName,
-          teacherUsername: course.teacherUsername
-        });
-      });
-    });
-  } else {
-    // For teacher/parent, treat schedule as a flat array of slots
-    allSlots = schedule.map(slot => ({
-      ...slot,
-      courseName: slot.courseName || '',
-      teacherName: slot.teacherName || '',
-      teacherUsername: slot.teacherUsername || ''
-    }));
-  }
+  // If schedule is a flat array of slots, use it directly
+  let allSlots = schedule;
 
-  // Sort by day of week, then by time
+  // Debug: log isBooked type and value for each slot
+  allSlots.forEach(slot => {
+    console.log('Slot isBooked:', slot.isBooked, typeof slot.isBooked, slot);
+  });
+
+  // Only show slots where isBooked is true (boolean or string)
+  allSlots = allSlots.filter(slot => slot.isBooked === true || slot.isBooked === 'true');
+  console.log('Filtered booked slots:', allSlots);
+
+  // Sort by next upcoming date (day + time)
   allSlots.sort((a, b) => {
-    const dayA = daysOfWeek.indexOf(a.day.charAt(0).toUpperCase() + a.day.slice(1).toLowerCase());
-    const dayB = daysOfWeek.indexOf(b.day.charAt(0).toUpperCase() + b.day.slice(1).toLowerCase());
-    if (dayA !== dayB) return dayA - dayB;
-    const timeA = a.time.split("-")[0].trim();
-    const timeB = b.time.split("-")[0].trim();
-    return timeA.localeCompare(timeB);
+    // Get next date for each slot's day
+    const nextA = getNextDateOfWeek(a.day);
+    const nextB = getNextDateOfWeek(b.day);
+    // Add time to the date
+    if (a.time && b.time) {
+      const [aHour, aMin] = a.time.split('-')[0].trim().split(':');
+      const [bHour, bMin] = b.time.split('-')[0].trim().split(':');
+      nextA.setHours(parseInt(aHour, 10), parseInt(aMin, 10) || 0, 0, 0);
+      nextB.setHours(parseInt(bHour, 10), parseInt(bMin, 10) || 0, 0, 0);
+    }
+    return nextA - nextB;
   });
 
   return (
@@ -108,8 +103,15 @@ const Slots = () => {
               const dateStr = nextDate.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
               return (
                 <div key={slot.slotId + '-' + idx} className="slot-card">
-                  {slot.courseName && <div className="slot-course">{slot.courseName}</div>}
-                  {slot.teacherName && <div className="slot-teacher">Teacher: {slot.teacherName}</div>}
+                  {(role === "student" || role === "parent") && slot.teacher && slot.teacher.teacherName && (
+                    <div className="slot-teacher">Teacher: {slot.teacher.teacherName}</div>
+                  )}
+                  {(role === "teacher" || role === "parent") && slot.student && slot.student.studentName && (
+                    <div className="slot-student">Student: {slot.student.studentName}</div>
+                  )}
+                  {slot.course && slot.course.courseName && (
+                    <div className="slot-course">Course: {slot.course.courseName}</div>
+                  )}
                   <div className="slot-details">
                     <span className="slot-day">{slot.day}</span>
                     <span className="slot-time">{slot.time}</span>

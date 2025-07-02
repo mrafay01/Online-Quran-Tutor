@@ -197,22 +197,32 @@ const TeacherDashboard = () => {
             </div>
             <div className="students-grid">
               {(dashboardData.recentStudents || []).map((student) => (
-                <div className="student-card" key={student.id}>
+                <div
+                  className="student-card"
+                  key={student.id}
+                  style={{
+                    border: '1px solid #e0e0e0',
+                    borderRadius: '12px',
+                    boxShadow: '0 2px 8px rgba(44,62,80,0.08)',
+                    margin: '18px 0',
+                    padding: '18px 20px',
+                    background: '#fff',
+                    display : 'flex',
+                    alignItems: 'center',
+                    gap: '24px',
+                    minWidth: '220px',
+                    maxWidth: '100%',
+                  }}
+                >
                   <div className="student-avatar">
-                    <img src={student.avatar || "/placeholder.svg"} alt={student.name} />
+                    <img src={student.avatar || "/placeholder.svg"} alt={student.name} style={{ width: 60, height: 60, borderRadius: '50%', objectFit: 'cover', border: '2px solid #cbe7cb' }} />
                   </div>
-                  <div className="student-info">
-                    <h4>{student.name}</h4>
-                    <p className="student-course">{student.currentCourse}</p>
-                    <div className="student-progress">
-                      <span>Progress: {student.progress}%</span>
-                      <div className="progress-bar-container">
-                        <div className="progress-bar" style={{ width: `${student.progress}%` }}></div>
-                      </div>
-                    </div>
-                    <div className="student-rating">
-                      <Star size={14} fill="currentColor" />
-                      <span>{student.rating || 'N/A'}</span>
+                  <div className="student-info" style={{ flex: 1 }}>
+                    <h4 style={{ margin: 0, fontWeight: 700, color: '#2d4a2d' }}>{student.name}</h4>
+                    <p className="student-course" style={{ margin: '4px 0 10px 0', color: '#4a5c2c', fontWeight: 500 }}>{student.currentCourse}</p>
+                    <div className="student-rating" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <Star size={14} fill="currentColor" style={{ color: '#ffa500' }} />
+                      <span style={{ fontWeight: 600 }}>{student.rating || 'N/A'}</span>
                     </div>
                   </div>
                 </div>

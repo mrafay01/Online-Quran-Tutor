@@ -29,6 +29,11 @@ import TeacherEarnings from './Components/DashboardComponents/Teacher/TeacherEar
 import EnrollTeacher from './Components/DashboardComponents/Student/EnrollTeacher';
 import TeacherDetail from './Components/DashboardComponents/Student/TeacherDetail';
 import CourseProgressDetail from './Components/DashboardComponents/Student/CourseProgressDetail';
+import RequestIncharge from './Components/DashboardComponents/Teacher/RequestIncharge';
+import ReviewRequests from './Components/DashboardComponents/Teacher/ReviewRequests';
+import TeacherSchedule from './Components/DashboardComponents/Teacher/TeacherSchedule';
+import StudentSchedule from './Components/DashboardComponents/Student/StudentSchedule';
+import ParentSchedule from './Components/DashboardComponents/Parent/ParentSchedule';
 
 function DashboardRouter() {
   const { role } = useParams();
@@ -66,12 +71,17 @@ function App() {
         <Route path='student/:username/progress' element={<StudentProgress />} />
         <Route path='student/:username/progress/:courseId' element={<CourseProgressDetail />} />
         <Route path='teacher/:username/dashboard' element={<TeacherDashboard />} />
-        <Route path='teacher/:username/my-students' element={<MyStudents />} />
-        <Route path='teacher/:username/courses' element={<TeacherCourses />} />
+        <Route path='teacher/:username/request-incharge' element={<RequestIncharge />} />
+        <Route path='teacher/:username/review-requests' element={<ReviewRequests />} />
+        <Route path=':role/:username/my-students' element={<MyStudents />} />
+        <Route path=':role/:username/courses' element={<TeacherCourses />} />
         <Route path='teacher/:username/earnings' element={<TeacherEarnings />} />
         <Route path="/student/:student_username/enroll-teacher" element={<EnrollTeacher />} />
         <Route path="/student/:student_username/teacher/:teacher_username" element={<TeacherDetail />} />
         <Route path='/:role/:username/slots' element={<Slots/>}/>
+        <Route path='teacher/:username/schedule' element={<TeacherSchedule />} />
+        <Route path='student/:username/schedule' element={<StudentSchedule />} />
+        <Route path='parent/:username/schedule' element={<ParentSchedule />} />
       </Routes>
     </BrowserRouter>
   );

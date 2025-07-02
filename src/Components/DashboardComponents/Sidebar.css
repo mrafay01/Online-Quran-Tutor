@@ -1,7 +1,8 @@
 /* Sidebar Styles */
 .sidebar {
   width: 280px;
-  background-color: #3d4d30;
+  min-width: 280px;
+  background: #3d4d30;
   color: #fff;
   display: flex;
   flex-direction: column;

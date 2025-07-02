@@ -25,6 +25,7 @@ import {
   Video,
 } from "lucide-react";
 import '../dashboard.css';
+import './schedule.css';
 
 const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const shortToFullDay = {
@@ -51,7 +52,7 @@ const SchedulePage = () => {
     if (!username || !role) return;
     setLoading(true);
     setError(null);
-    fetch('http://localhost:5000/GetSchedule?username=rafe123&role=student')
+    fetch(`http://localhost:5000/GetSchedule?username=${encodeURIComponent(username)}&role=${encodeURIComponent(role)}`)
       .then(res => {
         if (!res.ok) throw new Error("Failed to fetch schedule");
         return res.json();
@@ -188,7 +189,18 @@ const SchedulePage = () => {
     acc[dayShort] = scheduleData.filter(slot => (slot.day && (slot.day === dayFull || slot.day.toLowerCase() === dayFull.toLowerCase())));
     return acc;
   }, {});
+  // Only include time slots that are available for at least one day
   const allTimes = Array.from(new Set(scheduleData.map(slot => slot.time))).sort();
+
+  // Build a lookup for quick access: { [day]: { [time]: slotObj } }
+  const slotLookup = days.reduce((acc, dayShort) => {
+    const dayFull = shortToFullDay[dayShort];
+    acc[dayShort] = {};
+    (slotsByDay[dayShort] || []).forEach(slot => {
+      acc[dayShort][slot.time] = slot;
+    });
+    return acc;
+  }, {});
 
   return (
     <div className="dashboard-container" style={{ minHeight: '100vh', background: '#f6f6e9' }}>
@@ -212,89 +224,43 @@ const SchedulePage = () => {
         </div>
 
         <div className="schedule-content">
-          {/* Schedule Header */}
-          <div className="schedule-header">
-            <div className="schedule-navigation">
-              <button className="nav-btn" onClick={() => navigateWeek(-1)}>
-                <ChevronLeft size={20} />
-              </button>
-              <h2>{formatDate(currentDate)}</h2>
-              <button className="nav-btn" onClick={() => navigateWeek(1)}>
-                <ChevronRight size={20} />
-              </button>
-            </div>
-            <div className="schedule-actions">
-              <button className="schedule-btn">
-                <Plus size={16} />
-                Book Session
-              </button>
-            </div>
-          </div>
-
-          {/* Quick Stats */}
-          <div className="schedule-stats">
-            <div className="stat-card">
-              <div className="stat-number">
-                {scheduleData.filter((s) => s.status === "upcoming").length}
-              </div>
-              <div className="stat-label">Upcoming Sessions</div>
-            </div>
-            <div className="stat-card">
-              <div className="stat-number">
-                {scheduleData.filter((s) => s.status === "completed").length}
-              </div>
-              <div className="stat-label">Completed This Week</div>
-            </div>
-            <div className="stat-card">
-              <div className="stat-number">
-                {scheduleData.reduce(
-                  (acc, session) => acc + session.duration,
-                  0
-                )}
-              </div>
-              <div className="stat-label">Total Minutes</div>
-            </div>
-          </div>
-
-          {/* Weekly Calendar */}
-          <div className="weekly-calendar">
-            <div className="calendar-header">
-              {getWeekDays().map((day, index) => (
-                <div key={index} className="day-header">
-                  <div className="day-name">
-                    {day.toLocaleDateString("en-US", { weekday: "short" })}
-                  </div>
-                  <div className="day-number">{day.getDate()}</div>
-                </div>
-              ))}
-            </div>
-            <div className="calendar-body">
-              {getWeekDays().map((day, index) => (
-                <div key={index} className="day-column">
-                  {getSessionsForDate(day).map((session) => (
-                    <div
-                      key={session.id}
-                      className={`session-card ${session.status}`}
-                    >
-                      <div className="session-time">{session.time}</div>
-                      <div className="session-title">{session.title}</div>
-                      <div className="session-teacher">👨‍🏫 {session.teacher}</div>
-                      <div className="session-duration">{session.duration} min</div>
-                      {session.meetingLink && (
-                        <a
-                          href={session.meetingLink}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="join-btn"
-                        >
-                          Join Session
-                        </a>
-                      )}
-                    </div>
+          {/* Schedule Table for Teacher/Parent */}
+          <div className="schedule-table-wrapper">
+            <table className="schedule-table">
+              <colgroup>
+                <col/>
+                {days.map((_, idx) => (
+                  <col key={idx} /> 
+                ))}
+              </colgroup>
+              <thead>
+                <tr>
+                  <th className="schedule-th schedule-time-th">Time</th>
+                  {days.map(dayShort => (
+                    <th key={dayShort} className="schedule-th schedule-day-th">{dayShort}</th>
                   ))}
-                </div>
-              ))}
-            </div>
+                </tr>
+              </thead>
+              <tbody>
+                {allTimes.map((time, idx) => {
+                  const hasAny = days.some(dayShort => slotLookup[dayShort][time]);
+                  if (!hasAny) return null;
+                  return (
+                    <tr key={time} className={`schedule-row${idx % 2 === 0 ? ' even' : ' odd'}`}>
+                      <td className="schedule-td schedule-time-td">{time}</td>
+                      {days.map(dayShort => {
+                        const slot = slotLookup[dayShort][time];
+                        if (!slot) return <td key={dayShort} className="schedule-td schedule-unavailable"></td>;
+                        if (slot.isBooked === true) {
+                          return <td key={dayShort} className="schedule-td schedule-booked">Booked</td>;
+                        }
+                        return <td key={dayShort} className="schedule-td schedule-available"></td>;
+                      })}
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
         </div>
       </div>

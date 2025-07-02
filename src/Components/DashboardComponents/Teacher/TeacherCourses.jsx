@@ -28,13 +28,18 @@ const TeacherCourses = () => {
   const [error, setError] = useState(null)
 
   useEffect(() => {
+    console.log('TeacherCourses useEffect', { username, role });
     if (!username || !role) return
     setLoading(true)
     fetch(`http://localhost:5000/GetTeacherCourses?username=${username}`)
-      .then(res => res.json())
+      .then(res => {
+        console.log('API response:', res);
+        return res.json()
+      })
       .then(data => {
+        console.log('API data:', data);
         if (data.error) setError(data.error)
-        else setCourses(data)
+        else setCourses(data.courses)
         setLoading(false)
       })
       .catch(err => {
@@ -108,8 +113,8 @@ const TeacherCourses = () => {
                   <Book size={24} />
                 </div>
                 <div className="stat-info">
-                  <h4>{courses.filter((c) => c.status === "published").length}</h4>
-                  <p>Published Courses</p>
+                  <h4>{courses.length}</h4>
+                  <p>Total Courses</p>
                 </div>
               </div>
               <div className="stat-card">
@@ -117,26 +122,8 @@ const TeacherCourses = () => {
                   <Users size={24} />
                 </div>
                 <div className="stat-info">
-                  <h4>{courses.reduce((acc, c) => acc + c.enrolledStudents, 0)}</h4>
+                  <h4>{courses.reduce((acc, c) => acc + (c.studentCount || 0), 0)}</h4>
                   <p>Total Students</p>
-                </div>
-              </div>
-              <div className="stat-card">
-                <div className="stat-icon">
-                  <Star size={24} />
-                </div>
-                <div className="stat-info">
-                  <h4>{(courses.reduce((acc, c) => acc + c.rating, 0) / courses.length).toFixed(1)}</h4>
-                  <p>Average Rating</p>
-                </div>
-              </div>
-              <div className="stat-card">
-                <div className="stat-icon">
-                  <TrendingUp size={24} />
-                </div>
-                <div className="stat-info">
-                  <h4>{Math.round(courses.reduce((acc, c) => acc + c.completionRate, 0) / courses.length)}%</h4>
-                  <p>Avg Completion</p>
                 </div>
               </div>
             </div>
@@ -146,133 +133,18 @@ const TeacherCourses = () => {
           <section className="dashboard-section">
             <div className="section-header">
               <h2>Course Management</h2>
-              <button className="btn btn-primary">
-                <Plus size={16} />
-                Create New Course
-              </button>
+              
             </div>
 
             <div className="courses-grid">
               {courses.map((course) => (
-                <div key={course.id} className="course-card">
-                  <div className="course-image" style={{ height: "150px", overflow: "hidden" }}>
-                    <img
-                      src={course.thumbnail || "/placeholder.svg"}
-                      alt={course.title}
-                      style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                    />
-                    <div
-                      style={{
-                        position: "absolute",
-                        top: "10px",
-                        right: "10px",
-                        background: getLevelColor(course.level),
-                        color: "white",
-                        padding: "4px 8px",
-                        borderRadius: "4px",
-                        fontSize: "0.8rem",
-                      }}
-                    >
-                      {course.level}
-                    </div>
-                  </div>
-
+                <div key={course.courseId} className="course-card">
                   <div className="course-content">
-                    <div
-                      style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "flex-start",
-                        marginBottom: "10px",
-                      }}
-                    >
-                      <h3>{course.title}</h3>
-                      <div className="dropdown">
-                        <button className="dropdown-btn">
-                          <MoreVertical size={16} />
-                        </button>
-                        <div className="dropdown-content">
-                          <button>
-                            <Eye size={14} /> View
-                          </button>
-                          <button>
-                            <Edit size={14} /> Edit
-                          </button>
-                          <button>
-                            <Trash2 size={14} /> Delete
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-
-                    <p style={{ fontSize: "0.9rem", color: "var(--text-light)", marginBottom: "15px" }}>
-                      {course.description}
-                    </p>
-
-                    <div
-                      className="course-meta"
-                      style={{
-                        display: "flex",
-                        flexWrap: "wrap",
-                        gap: "15px",
-                        marginBottom: "15px",
-                        fontSize: "0.8rem",
-                        color: "var(--text-light)",
-                      }}
-                    >
-                      <span>
-                        <BookOpen size={14} /> {course.totalLessons} lessons
-                      </span>
-                      <span>
-                        <Clock size={14} /> {course.duration}
-                      </span>
-                      <span>
-                        <Users size={14} /> {course.enrolledStudents} students
-                      </span>
-                    </div>
-
-                    <div
-                      className="course-rating"
-                      style={{ display: "flex", alignItems: "center", gap: "5px", marginBottom: "15px" }}
-                    >
-                      <Star size={16} fill="currentColor" style={{ color: "#ffa500" }} />
-                      <span>{course.rating}</span>
-                      <span style={{ color: "var(--text-light)" }}>({course.totalReviews} reviews)</span>
-                    </div>
-
-                    <div className="course-progress mb-2">
-                      <div className="progress-text">
-                        <span>Completion Rate</span>
-                        <span>{course.completionRate}%</span>
-                      </div>
-                      <div className="progress-bar-container">
-                        <div className="progress-bar" style={{ width: `${course.completionRate}%` }}></div>
-                      </div>
-                    </div>
-
-                    <div
-                      style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                        marginBottom: "15px",
-                      }}
-                    >
-                      <span className={getStatusBadge(course.status)}>
-                        {course.status.charAt(0).toUpperCase() + course.status.slice(1)}
-                      </span>
-                      <span style={{ fontSize: "1.2rem", fontWeight: "bold", color: "var(--primary)" }}>
-                        ${course.price}
-                      </span>
-                    </div>
-
-                    <div className="course-actions">
-                      <button className="btn btn-primary" style={{ flex: 1 }}>
-                        Manage Course
-                      </button>
-                      <button className="btn btn-secondary">
-                        <Eye size={16} />
-                      </button>
+                    <h3>{course.courseName}</h3>
+                    <p style={{ fontSize: "0.95rem", color: "#444", marginBottom: "10px" }}>{course.courseDescription}</p>
+                    <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "10px" }}>
+                      <Users size={16} />
+                      <span style={{ fontWeight: 500 }}>{course.studentCount} students</span>
                     </div>
                   </div>
                 </div>

@@ -32,6 +32,7 @@ const MyStudents = () => {
   const [filterStatus, setFilterStatus] = useState("all")
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [courses, setCourses] = useState([]);
 
   useEffect(() => {
     if (!username || !role) return
@@ -41,8 +42,7 @@ const MyStudents = () => {
       .then(data => {
         if (data.error) setError(data.error)
         else {
-          setStudents(data)
-          setFilteredStudents(data)
+          setCourses(Array.isArray(data.courses) ? data.courses : [])
         }
         setLoading(false)
       })
@@ -115,198 +115,36 @@ const MyStudents = () => {
         </div>
 
         <div className="dashboard-content">
-          {/* Students Overview Stats */}
-          <section className="dashboard-section">
-            <div className="section-header">
-              <h2>Students Overview</h2>
-            </div>
-            <div className="teaching-stats">
-              <div className="stat-card">
-                <div className="stat-icon">
-                  <User size={24} />
-                </div>
-                <div className="stat-info">
-                  <h4>{students.filter((s) => s.status === "active").length}</h4>
-                  <p>Active Students</p>
-                </div>
-              </div>
-              <div className="stat-card">
-                <div className="stat-icon">
-                  <Clock size={24} />
-                </div>
-                <div className="stat-info">
-                  <h4>{students.reduce((acc, s) => acc + s.totalHours, 0)}</h4>
-                  <p>Total Hours Taught</p>
-                </div>
-              </div>
-              <div className="stat-card">
-                <div className="stat-icon">
-                  <Star size={24} />
-                </div>
-                <div className="stat-info">
-                  <h4>{(students.reduce((acc, s) => acc + s.rating, 0) / students.length).toFixed(1)}</h4>
-                  <p>Average Rating</p>
-                </div>
-              </div>
-              <div className="stat-card">
-                <div className="stat-icon">
-                  <TrendingUp size={24} />
-                </div>
-                <div className="stat-info">
-                  <h4>{Math.round(students.reduce((acc, s) => acc + s.progress, 0) / students.length)}%</h4>
-                  <p>Average Progress</p>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          {/* Search and Filter */}
-          <section className="dashboard-section">
-            <div className="section-header">
-              <h2>Student Management</h2>
-              <button className="btn btn-primary">
-                <Plus size={16} />
-                Add Student
-              </button>
-            </div>
-
-            <div className="d-flex gap-3 mb-3">
-              <div className="search-bar" style={{ flex: 1, maxWidth: "400px" }}>
-                <Search size={20} />
-                <input
-                  type="text"
-                  placeholder="Search students..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-              </div>
-              <select
-                className="form-select"
-                value={filterStatus}
-                onChange={(e) => setFilterStatus(e.target.value)}
-                style={{ minWidth: "150px" }}
-              >
-                <option value="all">All Status</option>
-                <option value="active">Active</option>
-                <option value="inactive">Inactive</option>
-                <option value="pending">Pending</option>
-              </select>
-            </div>
-
-            {/* Students Grid */}
-            <div className="students-grid">
-              {filteredStudents.map((student) => (
-                <div key={student.id} className="student-card">
-                  <div
-                    className="student-header"
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "flex-start",
-                      marginBottom: "15px",
-                    }}
-                  >
-                    <div style={{ display: "flex", alignItems: "center", gap: "15px" }}>
-                      <div className="student-avatar">
-                        <img src={student.avatar || "/placeholder.svg"} alt={student.name} />
+          {/* Students by Course */}
+          {courses.length === 0 ? (
+            <div className="no-data">No students found.</div>
+          ) : (
+            courses.map(course => (
+              <div key={course.courseId} className="course-students-section" style={{ marginBottom: 40, background: '#fff', borderRadius: 16, boxShadow: '0 4px 24px rgba(0,0,0,0.07)', padding: 24, maxWidth: 900, marginLeft: 'auto', marginRight: 'auto' }}>
+                <h2 style={{ margin: '0 0 8px 0', fontWeight: 700, color: '#2d4a2d', fontSize: '1.3rem' }}>{course.courseName}</h2>
+                <p style={{ color: '#666', marginBottom: 16 }}>{course.courseDescription}</p>
+                {(!course.students || course.students.length === 0) ? (
+                  <div style={{ color: '#888', marginBottom: 16 }}>No students enrolled in this course.</div>
+                ) : (
+                  <div className="students-grid">
+                    {course.students.map(student => (
+                      <div key={student.studentId} className="student-card" style={{ border: '1px solid #e0e0e0', borderRadius: '12px', boxShadow: '0 2px 8px rgba(44,62,80,0.08)', margin: '18px 0', padding: '18px 20px', background: '#fff', display: 'flex', alignItems: 'center', gap: '24px', minWidth: '220px', maxWidth: '100%' }}>
+                        <div className="student-avatar">
+                          <img src={student.avatar || "/placeholder.svg"} alt={student.name} style={{ width: 60, height: 60, borderRadius: '50%', objectFit: 'cover', border: '2px solid #cbe7cb' }} />
+                        </div>
+                        <div className="student-info" style={{ flex: 1 }}>
+                          <h4 style={{ margin: 0, fontWeight: 700, color: '#2d4a2d' }}>{student.name}</h4>
+                          <p style={{ margin: '4px 0 10px 0', color: '#4a5c2c', fontWeight: 500 }}>@{student.username}</p>
+                          <div style={{ marginBottom: 8, color: '#555' }}>Lessons: {student.lessonsCompleted} / {student.totalLessons}</div>
+                          <div style={{ marginBottom: 8, color: '#555' }}>Completion: {student.courseCompletionPercent}%</div>
+                        </div>
                       </div>
-                      <div className="student-info">
-                        <h4>{student.name}</h4>
-                        <p className="student-course">{student.currentCourse}</p>
-                        <span className={getStatusBadge(student.status)}>
-                          {student.status.charAt(0).toUpperCase() + student.status.slice(1)}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="dropdown">
-                      <button className="dropdown-btn">
-                        <MoreVertical size={16} />
-                      </button>
-                      <div className="dropdown-content">
-                        <button>
-                          <Edit size={14} /> Edit
-                        </button>
-                        <button>
-                          <MessageSquare size={14} /> Message
-                        </button>
-                        <button>
-                          <Trash2 size={14} /> Remove
-                        </button>
-                      </div>
-                    </div>
+                    ))}
                   </div>
-
-                  <div className="student-details">
-                    <div className="student-contact mb-2">
-                      <p>
-                        <Mail size={14} /> {student.email}
-                      </p>
-                      <p>
-                        <Phone size={14} /> {student.phone}
-                      </p>
-                    </div>
-
-                    <div className="student-progress mb-2">
-                      <div className="progress-text">
-                        <span>Progress</span>
-                        <span>{student.progress}%</span>
-                      </div>
-                      <div className="progress-bar-container">
-                        <div className="progress-bar" style={{ width: `${student.progress}%` }}></div>
-                      </div>
-                    </div>
-
-                    <div className="student-stats">
-                      <div className="child-stat">
-                        <Clock size={14} />
-                        <span>{student.totalHours}h total</span>
-                      </div>
-                      <div className="child-stat">
-                        <BookOpen size={14} />
-                        <span>
-                          {student.completedSessions}/{student.totalSessions} sessions
-                        </span>
-                      </div>
-                      <div className="child-stat">
-                        <Star size={14} />
-                        <span>{student.rating}/5.0</span>
-                      </div>
-                    </div>
-
-                    {student.upcomingSession && (
-                      <div
-                        className="upcoming-session mt-2"
-                        style={{
-                          background: "rgba(92, 114, 74, 0.1)",
-                          padding: "10px",
-                          borderRadius: "8px",
-                          fontSize: "0.9rem",
-                        }}
-                      >
-                        <Calendar size={14} />
-                        <span>Next: {new Date(student.upcomingSession).toLocaleString()}</span>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="student-actions mt-3">
-                    <button className="btn btn-primary" style={{ flex: 1 }}>
-                      View Details
-                    </button>
-                    <button className="btn btn-secondary">
-                      <MessageSquare size={16} />
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {filteredStudents.length === 0 && (
-              <div className="text-center mt-3">
-                <p>No students found matching your criteria.</p>
+                )}
               </div>
-            )}
-          </section>
+            ))
+          )}
         </div>
       </div>
     </div>

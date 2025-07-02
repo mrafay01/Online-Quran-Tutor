@@ -79,14 +79,6 @@ const StudentProgress = () => {
     avatar: "/placeholder.svg",
   };
 
-  const {
-    completedLessons = 0,
-    totalLessons = 0,
-    totalHours = 0,
-    averageScore = 0,
-    currentStreak = 0,
-  } = progressData.overallStats;
-
   if (loading) return <div className="loading">Loading progress data...</div>;
   if (error) return <div className="error">{error}</div>;
   if (!progressData.progress.length) return <div>No progress data found.</div>;
@@ -155,7 +147,7 @@ const StudentProgress = () => {
                             {course.courseName}
                           </div>
                           <div className="progress-details">
-                            <span>Total Lessons: {course.totalLessons}</span>
+                            <span>Total Lessons: {course.totalCourseLessons}</span>
                             <span>Completed: {course.completedLessons}</span>
                             <span>Progress: {course.progressPercent}%</span>
                           </div>

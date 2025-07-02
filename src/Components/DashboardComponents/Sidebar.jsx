@@ -81,6 +81,9 @@ const Sidebar = ({
           { id: "dashboard", label: "Dashboard", icon: Home, path: `/teacher/${username}/dashboard` },
           { id: "my-students", label: "My Students", icon: Users, path: `/teacher/${username}/my-students` },
           { id: "courses", label: "Courses", icon: Book, path: `/teacher/${username}/courses` },
+          { id: "schedule", label: "Schedule", icon: Calendar, path: `/teacher/${username}/schedule` },
+          { id: "request-incharge", label: "Request Incharge", icon: Calendar, path: `/teacher/${username}/request-incharge` },
+          { id: "review-requests", label: "Review Requests", icon: Calendar, path: `/teacher/${username}/review-requests` },
           { id: "slots", label: "Slots", icon: Clock, path: `/teacher/${username}/slots` },
           { id: "profile", label: "Profile", icon: User, path: `/teacher/${username}/profile` },
         ];
