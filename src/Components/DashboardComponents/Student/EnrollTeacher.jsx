@@ -30,20 +30,19 @@ const EnrollTeacher = () => {
         const formatted = data.map((tutor, idx) => ({
           id: tutor.id || tutor.cnic || idx,
           username: tutor.username || tutor.id || tutor.cnic || `teacher${idx}`,
-          name: tutor.name || `Teacher ${idx + 1}`,
-          location: tutor.region || "Unknown",
-          rating: tutor.ratings || 5,
-          canTeach: ["Nazra", "Hifz", "Tajweed", "Qiraat"],
-          bio: tutor.bio || "No bio provided.",
-          languages: tutor.languages ? tutor.languages.split(',').map(l => l.trim()) : ["Arabic", "Urdu", "English"],
-          gender: tutor.gender === "M" ? "Male" : tutor.gender === "F" ? "Female" : "N/A",
-          age: tutor.dob ? (new Date().getFullYear() - new Date(tutor.dob).getFullYear()) : "N/A",
-          hourlyRate: tutor.hourly_rate ? `Rs. ${tutor.hourly_rate}/hr` : "$5.00/hr",
-          avatar: tutor.pic || '/static/profile_images/default_avatar.png',
-          taught: "20 Students",
-          timeZone: tutor.region || "Unknown",
-          sect: "Sunni",
-          online: true,
+          name: tutor.name || '',
+          location: tutor.region || '',
+          rating: tutor.ratings || '',
+          canTeach: Array.isArray(tutor.canTeach) ? tutor.canTeach : (typeof tutor.canTeach === 'string' ? tutor.canTeach.split(',').map(c => c.trim()) : []),
+          bio: tutor.bio || '',
+          languages: Array.isArray(tutor.languages) ? tutor.languages : (typeof tutor.languages === 'string' ? tutor.languages.split(',').map(l => l.trim()) : []),
+          gender: tutor.gender === "M" ? "Male" : tutor.gender === "F" ? "Female" : tutor.gender || '',
+          age: tutor.dob ? (new Date().getFullYear() - new Date(tutor.dob).getFullYear()) : '',
+          hourlyRate: tutor.hourly_rate ? `Rs. ${tutor.hourly_rate}/hr` : '',
+          avatar: tutor.pic || '',
+          taught: tutor.taught || '',
+          timeZone: tutor.region || '',
+          online: tutor.online,
         }));
         setTeachers(formatted);
         setLoading(false);
@@ -122,14 +121,14 @@ const EnrollTeacher = () => {
                 </div>
                 <div className="teacher-bio">{teacher.bio}</div>
                 <div className="teacher-info-row">
-                  <span><User size={14} /> {teacher.gender}</span>
-                  <span><BookOpen size={14} /> {teacher.canTeach.join(', ')}</span>
-                  <span><Globe size={14} /> {teacher.languages.join(', ')}</span>
+                  <span><User size={14} /> {teacher.gender || 'N/A'}</span>
+                  <span><BookOpen size={14} /> {teacher.canTeach && teacher.canTeach.length > 0 ? teacher.canTeach.join(', ') : 'N/A'}</span>
+                  <span><Globe size={14} /> {teacher.languages && teacher.languages.length > 0 ? teacher.languages.join(', ') : 'N/A'}</span>
                 </div>
-                <div className="teacher-meta">Age: {teacher.age} &nbsp; | &nbsp; Hourly: {teacher.hourlyRate}</div>
+                <div className="teacher-meta">Age: {teacher.age || 'N/A'} &nbsp; | &nbsp; Hourly: {teacher.hourlyRate || 'N/A'}</div>
                 <div className="teacher-rating-row">
-                  <span className="teacher-rating-stars">{'★'.repeat(Math.round(teacher.rating))}</span>
-                  <span className="teacher-rating-value">{teacher.rating} / 5</span>
+                  <span className="teacher-rating-stars">{teacher.rating ? '★'.repeat(Math.round(teacher.rating)) : ''}</span>
+                  <span className="teacher-rating-value">{teacher.rating ? `${teacher.rating} / 5` : 'N/A'}</span>
                 </div>
                 <button
                   className="btn btn-primary"

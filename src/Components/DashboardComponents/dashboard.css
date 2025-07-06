@@ -146,9 +146,7 @@ body {
 
 .progress-percentage {
   position: absolute;
-  top: 50%;
   left: 50%;
-  transform: translate(-50%, -50%);
   font-size: 1.6rem;
   font-weight: 700;
   color: var(--primary-dark);
@@ -2657,4 +2655,134 @@ body {
     padding: 1.2rem 0.7rem 1rem 0.7rem;
     min-width: 220px;
   }
+}
+
+.video-call-container {
+  max-width: 520px;
+  margin: 2rem auto;
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: 0 4px 24px rgba(60,72,88,0.13);
+  padding: 2rem 1.5rem 1.5rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.video-call-header {
+  font-size: 1.35rem;
+  font-weight: 600;
+  margin-bottom: 1.2rem;
+  color: #2d3748;
+  letter-spacing: 0.01em;
+}
+
+.video-streams {
+  display: flex;
+  gap: 18px;
+  margin-bottom: 1.2rem;
+  width: 100%;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.video-box {
+  width: 240px;
+  height: 180px;
+  background: #eaeaea;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #888;
+  font-size: 18px;
+  position: relative;
+  overflow: hidden;
+}
+
+.video-box.muted::after {
+  content: '\\1F507';
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  font-size: 1.5rem;
+  color: #e53e3e;
+  background: rgba(255,255,255,0.7);
+  border-radius: 50%;
+  padding: 2px 6px;
+}
+
+.video-call-controls {
+  display: flex;
+  gap: 16px;
+  margin-top: 0.5rem;
+}
+
+.video-call-btn {
+  padding: 0.6rem 1.5rem;
+  font-size: 1.08rem;
+  border: none;
+  border-radius: 8px;
+  background: #edf2f7;
+  color: #2d3748;
+  cursor: pointer;
+  transition: background 0.18s, color 0.18s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.video-call-btn:hover {
+  background: #e2e8f0;
+}
+
+.video-call-btn.danger {
+  background: #e53e3e;
+  color: #fff;
+}
+
+.video-call-btn.danger:hover {
+  background: #c53030;
+}
+
+@media (max-width: 600px) {
+  .video-call-container {
+    padding: 1rem 0.5rem;
+  }
+  .video-streams {
+    flex-direction: column;
+    gap: 10px;
+  }
+  .video-box {
+    width: 98vw;
+    max-width: 98vw;
+    height: 38vw;
+    min-height: 120px;
+  }
+}
+
+.view-lessons-btn {
+  background: #4a5c2c;
+  color: #fff;
+  border: none;
+  padding: 10px 24px;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  margin-top: 16px;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(76, 96, 56, 0.08);
+  transition: background 0.2s, box-shadow 0.2s, color 0.2s;
+  outline: none;
+  display: block;
+  width: 100%;
+  max-width: 200px;
+}
+
+.view-lessons-btn:hover,
+.view-lessons-btn:focus {
+  background: #3a4622;
+  color: #ffd700;
+  box-shadow: 0 4px 16px rgba(76, 96, 56, 0.16);
+  border: 1.5px solid #ffd700;
 }

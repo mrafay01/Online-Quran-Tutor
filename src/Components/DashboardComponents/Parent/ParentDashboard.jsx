@@ -136,13 +136,6 @@ const ParentDashboard = () => {
                   <p>Hours This Month</p>
                 </div>
               </div>
-              <div className="stat-card">
-                <div className="stat-icon"><DollarSign size={24} /></div>
-                <div className="stat-info">
-                  <h4>${dashboardData.monthlySpending || 0}</h4>
-                  <p>Monthly Spending</p>
-                </div>
-              </div>
             </div>
           </section>
 
@@ -196,77 +189,6 @@ const ParentDashboard = () => {
               ))}
             </div>
           </section>
-
-          {/* Upcoming Sessions */}
-          <section className="dashboard-section upcoming-sessions-section">
-            <div className="section-header">
-              <h2>Upcoming Sessions</h2>
-              <a href="#" className="view-all" onClick={() => setActiveSection("schedule")}>
-                View All <ChevronRight size={16} />
-              </a>
-            </div>
-            <div className="sessions-list">
-              {(dashboardData.upcomingSessions || []).map((session) => (
-                <div className="session-item" key={session.id}>
-                  <div className="session-time">
-                    <div className="day">{session.day}</div>
-                    <div className="time">{session.time}</div>
-                  </div>
-                  <div className="session-details">
-                    <h4>{session.topic}</h4>
-                    <p className="session-child"><Baby size={14} /> {session.childName}</p>
-                    <p className="session-teacher"><User size={14} /> {session.teacher}</p>
-                    <p className="session-duration"><Clock size={14} /> {session.duration}</p>
-                  </div>
-                  <div className="session-status">
-                    <span className={`status-badge ${session.status}`}>{session.status}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-
-          {/* Recent Activity & Alerts */}
-          <section className="dashboard-section activity-alerts-section">
-            <div className="section-header">
-              <h2>Recent Activity & Alerts</h2>
-            </div>
-            <div className="activity-grid">
-              <div className="activity-card">
-                <h4>Recent Achievements</h4>
-                <div className="activity-list">
-                  {(dashboardData.recentAchievements || []).map((achievement) => (
-                    <div className="activity-item" key={achievement.id}>
-                      <div className="activity-icon">
-                        <Award size={16} />
-                      </div>
-                      <div className="activity-details">
-                        <p><strong>{achievement.childName}</strong> earned "{achievement.title}"</p>
-                        <span className="activity-time">{achievement.timeAgo}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              <div className="activity-card">
-                <h4>Important Alerts</h4>
-                <div className="activity-list">
-                  {(dashboardData.alerts || []).map((alert) => (
-                    <div className="activity-item alert" key={alert.id}>
-                      <div className="activity-icon">
-                        <AlertCircle size={16} />
-                      </div>
-                      <div className="activity-details">
-                        <p>{alert.message}</p>
-                        <span className="activity-time">{alert.timeAgo}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </section>
-
           {/* <section className="dashboard-section payment-summary-section">
             <div className="section-header">
               <h2>Payment Summary</h2>

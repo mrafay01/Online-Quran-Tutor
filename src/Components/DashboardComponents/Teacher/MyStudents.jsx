@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useParams } from 'react-router-dom'
+import { useParams, useNavigate } from 'react-router-dom'
 import Sidebar from '../Sidebar'
 import '../dashboard.css'
 import {
@@ -20,10 +20,12 @@ import {
   MoreVertical,
   Edit,
   Trash2,
+  Eye,
 } from "lucide-react"
 
 const MyStudents = () => {
   const { username, role } = useParams()
+  const navigate = useNavigate()
   const [isSidebarOpen, setIsSidebarOpen] = useState(true)
   const [activeSection, setActiveSection] = useState("my-students")
   const [students, setStudents] = useState([])
@@ -39,11 +41,57 @@ const MyStudents = () => {
     setLoading(true)
     fetch(`http://localhost:5000/GetTeacherStudents?username=${username}`)
       .then(res => res.json())
-      .then(data => {
-        if (data.error) setError(data.error)
-        else {
-          setCourses(Array.isArray(data.courses) ? data.courses : [])
+      .then(async (data) => {
+        if (data.error) {
+          setError(data.error)
+          setLoading(false)
+          return
         }
+        
+        const courses = Array.isArray(data.courses) ? data.courses : []
+        
+        // Fetch progress data for each student in each course
+        const coursesWithProgress = await Promise.all(
+          courses.map(async (course) => {
+            if (!course.students || course.students.length === 0) {
+              return course
+            }
+            
+            const studentsWithProgress = await Promise.all(
+              course.students.map(async (student) => {
+                try {
+                  const progressRes = await fetch(`http://localhost:5000/GetStudentProgress?username=${student.username}`)
+                  const progressData = await progressRes.json()
+                  
+                  // Find the specific course progress
+                  const courseProgress = progressData.progress?.find(c => c.courseId === course.courseId)
+                  
+                  return {
+                    ...student,
+                    lessonsCompleted: courseProgress?.completedLessons || 0,
+                    totalLessons: courseProgress?.totalCourseLessons || 0,
+                    courseCompletionPercent: courseProgress?.progressPercent || 0
+                  }
+                } catch (err) {
+                  console.error(`Failed to fetch progress for student ${student.username}:`, err)
+                  return {
+                    ...student,
+                    lessonsCompleted: 0,
+                    totalLessons: 0,
+                    courseCompletionPercent: 0
+                  }
+                }
+              })
+            )
+            
+            return {
+              ...course,
+              students: studentsWithProgress
+            }
+          })
+        )
+        
+        setCourses(coursesWithProgress)
         setLoading(false)
       })
       .catch(err => {
@@ -72,6 +120,17 @@ const MyStudents = () => {
 
   const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen)
   const handleSectionChange = (section) => setActiveSection(section)
+
+  const handleViewProgress = (student, course) => {
+    const queryParams = new URLSearchParams({
+      student_username: student.username,
+      course_id: course.courseId,
+      student_name: student.name,
+      course_name: course.courseName,
+    }).toString();
+    
+    navigate(`/${role}/${username}/lesson-progress?${queryParams}`);
+  };
 
   // Create userInfo object for Sidebar
   const userInfo = {
@@ -137,6 +196,35 @@ const MyStudents = () => {
                           <p style={{ margin: '4px 0 10px 0', color: '#4a5c2c', fontWeight: 500 }}>@{student.username}</p>
                           <div style={{ marginBottom: 8, color: '#555' }}>Lessons: {student.lessonsCompleted} / {student.totalLessons}</div>
                           <div style={{ marginBottom: 8, color: '#555' }}>Completion: {student.courseCompletionPercent}%</div>
+                        </div>
+                        <div className="student-actions">
+                          <button
+                            onClick={() => handleViewProgress(student, course)}
+                            style={{
+                              background: '#4a5c2c',
+                              color: '#fff',
+                              border: 'none',
+                              padding: '8px 12px',
+                              borderRadius: 8,
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 6,
+                              fontSize: '0.9rem',
+                              transition: 'all 0.2s ease'
+                            }}
+                            onMouseEnter={(e) => {
+                              e.target.style.background = '#b6e2b6';
+                              e.target.style.color = '#4a5c2c';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.target.style.background = '#4a5c2c';
+                              e.target.style.color = '#fff';
+                            }}
+                          >
+                            <Eye size={16} />
+                            View Progress
+                          </button>
                         </div>
                       </div>
                     ))}

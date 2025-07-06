@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import Sidebar from '../Sidebar';
 import './RequestIncharge.css';
 import { useParams } from 'react-router-dom';
+import { DateTime } from 'luxon';
 
 const RequestIncharge = () => {
   const { username } = useParams();
@@ -13,8 +14,10 @@ const RequestIncharge = () => {
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [initialLoading, setInitialLoading] = useState(true);
+  const [userRegion, setUserRegion] = useState('');
+  const [teacherRegions, setTeacherRegions] = useState({});
 
-  // Fetch teacher's slots and all teachers on mount
+  // Fetch teacher's slots, all teachers, and regions on mount
   useEffect(() => {
     async function fetchData() {
       setInitialLoading(true);
@@ -28,6 +31,33 @@ const RequestIncharge = () => {
         const teacherRes = await fetch('http://localhost:5000/GetAllTeachers');
         const teacherData = await teacherRes.json();
         setTeachers(Array.isArray(teacherData) ? teacherData : []);
+        // Fetch current user's region
+        let userRegion = 'UTC';
+        try {
+          const res = await fetch(`http://localhost:5000/api/get_user_region?username=${encodeURIComponent(username)}&role=teacher`);
+          if (res.ok) {
+            const data = await res.json();
+            userRegion = data.region || 'UTC';
+          }
+        } catch {}
+        setUserRegion(userRegion);
+        // Fetch all available teachers' regions
+        const teacherUsernames = Array.from(new Set((teacherData || []).map(t => t.username).filter(Boolean)));
+        const regions = {};
+        await Promise.all(teacherUsernames.map(async (teacherUsername) => {
+          try {
+            const res = await fetch(`http://localhost:5000/api/get_user_region?username=${encodeURIComponent(teacherUsername)}&role=teacher`);
+            if (res.ok) {
+              const data = await res.json();
+              regions[teacherUsername] = data.region || 'UTC';
+            } else {
+              regions[teacherUsername] = 'UTC';
+            }
+          } catch {
+            regions[teacherUsername] = 'UTC';
+          }
+        }));
+        setTeacherRegions(regions);
       } catch (err) {
         setError('Failed to load data.');
       } finally {
@@ -36,6 +66,24 @@ const RequestIncharge = () => {
     }
     fetchData();
   }, [username]);
+
+  // Helper to convert a time range string (e.g., "09:00 - 10:00") from one region to another
+  function convertTimeRangeBetweenRegions(timeRange, fromZone, toZone) {
+    if (!timeRange || !fromZone || !toZone) return "";
+    const [start, end] = timeRange.split(" - ");
+    try {
+      const today = DateTime.now().setZone(fromZone);
+      const startDT = DateTime.fromFormat(start, "HH:mm", { zone: fromZone }).set({
+        year: today.year, month: today.month, day: today.day
+      });
+      const endDT = DateTime.fromFormat(end, "HH:mm", { zone: fromZone }).set({
+        year: today.year, month: today.month, day: today.day
+      });
+      return `${startDT.setZone(toZone).toFormat("HH:mm")} - ${endDT.setZone(toZone).toFormat("HH:mm")}`;
+    } catch {
+      return timeRange;
+    }
+  }
 
   const handleSlotChange = (slotId) => {
     setSelectedSlots((prev) =>
@@ -59,15 +107,21 @@ const RequestIncharge = () => {
   console.log("Selected DayTimes:", selectedDayTimes);
   console.log("Slots:", slots);
 
-  // Filter teachers: must be able to teach all selected courses and be available for all selected slots
+  // Filter teachers: must be able to teach all selected courses and be available for all selected slots (timezone-aware)
   const filteredTeachers = teachers.filter(teacher => {
-    // canTeach: array of course names
-    // available: array of {day, time}
     const canTeach = Array.isArray(teacher.canTeach) ? teacher.canTeach : (teacher.canTeach ? teacher.canTeach.split(',').map(c => c.trim()) : []);
     const available = Array.isArray(teacher.available) ? teacher.available : [];
     const canTeachAll = selectedCourses.every(course => canTeach.includes(course));
+    // For each selected slot, check if teacher is available for a slot that, when converted to userRegion, matches the selected slot's day and time
+    const teacherRegion = teacherRegions[teacher.username] || 'UTC';
     const availableAll = selectedDayTimes.every(selSlot =>
-      available.some(avail => avail.day === selSlot.day && avail.time === selSlot.time)
+      available.some(avail => {
+        // Convert teacher's available slot time to userRegion
+        if (!avail.time || !avail.day) return false;
+        const convertedTime = convertTimeRangeBetweenRegions(avail.time, teacherRegion, userRegion);
+        // Compare both day and time
+        return avail.day === selSlot.day && convertedTime === selSlot.time;
+      })
     );
     // Exclude self
     const notSelf = teacher.username !== username && teacher.name !== username;

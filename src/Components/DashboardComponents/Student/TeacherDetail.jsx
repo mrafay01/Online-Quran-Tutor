@@ -12,7 +12,8 @@ import {
 } from "lucide-react";
 import defaultAvatar from "../../Assets/Images/male-avatar.jpg";
 import "./TeacherDetailStyle.css";
-import "../../ScheduleComponents/ScheduleContent.css";
+// import "../../ScheduleComponents/ScheduleContent.css";
+import { DateTime } from "luxon";
 
 const TeacherDetail = () => {
   const { student_username, teacher_username } = useParams();
@@ -26,6 +27,7 @@ const TeacherDetail = () => {
   const [selectedCourse, setSelectedCourse] = useState("");
   const [enrolledCourses, setEnrolledCourses] = useState([]);
   const [successModal, setSuccessModal] = useState(false);
+  const [studentRegion, setStudentRegion] = useState("");
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -88,6 +90,18 @@ const TeacherDetail = () => {
       });
   }, [student_username]);
 
+  useEffect(() => {
+    if (!student_username) return;
+    fetch(`http://localhost:5000/api/get_user_region?role=student&username=${student_username}`)
+      .then(res => res.json())
+      .then(data => {
+        setStudentRegion(data.region || Intl.DateTimeFormat().resolvedOptions().timeZone);
+      })
+      .catch(() => {
+        setStudentRegion(Intl.DateTimeFormat().resolvedOptions().timeZone);
+      });
+  }, [student_username]);
+
   const toggleSlot = (slotObj) => {
     console.log('toggleSlot called with:', slotObj);
     if (!slotObj || !slotObj.slotId) return;
@@ -137,12 +151,52 @@ const TeacherDetail = () => {
     return acc;
   }, {});
 
-  // Get all unique times across all days
-  const allTimes = Array.from(new Set(schedule.map(slot => slot.time))).sort();
+  // Helper to convert a time range string (e.g., "09:00 - 10:00") from teacher's region/UTC to student's region
+  function convertTimeRange(timeRange, fromZone, toZone) {
+    if (!timeRange) return "";
+    const [start, end] = timeRange.split(" - ");
+    const baseZone = fromZone || "UTC";
+    try {
+      const today = DateTime.now().setZone(baseZone);
+      const startDT = DateTime.fromFormat(start, "HH:mm", { zone: baseZone }).set({
+        year: today.year, month: today.month, day: today.day
+      });
+      const endDT = DateTime.fromFormat(end, "HH:mm", { zone: baseZone }).set({
+        year: today.year, month: today.month, day: today.day
+      });
+      return `${startDT.setZone(toZone).toFormat("HH:mm")} - ${endDT.setZone(toZone).toFormat("HH:mm")}`;
+    } catch {
+      return timeRange;
+    }
+  }
+
+  // Normalize time strings (remove spaces, ensure HH:mm - HH:mm format)
+  function normalizeTimeRange(timeRange) {
+    if (!timeRange) return "";
+    return timeRange.replace(/\s+/g, "").replace(/-/g, " - ");
+  }
+
+  // Get all unique, normalized times from the teacher's schedule and sort them
+  const allTimesRaw = Array.from(new Set(schedule.map(slot => normalizeTimeRange(slot.time)))).sort((a, b) => {
+    const aStart = a.split(" - ")[0];
+    const bStart = b.split(" - ")[0];
+    return DateTime.fromFormat(aStart, "HH:mm").toMillis() - DateTime.fromFormat(bStart, "HH:mm").toMillis();
+  });
+
+  // Get all unique times across all days (convert to student region for display)
+  const teacherZone = teacher?.region || "UTC";
+  const allTimes = allTimesRaw
+    .map(time => convertTimeRange(time, teacherZone, studentRegion))
+    .sort((a, b) => {
+      // Sort by start time in student's region (24-hour format)
+      const aStart = a.split(" - ")[0];
+      const bStart = b.split(" - ")[0];
+      return DateTime.fromFormat(aStart, "HH:mm").toMillis() - DateTime.fromFormat(bStart, "HH:mm").toMillis();
+    });
 
   return (
     <div className="dashboard-container">
-      <Sidebar userInfo={null} />
+      <Sidebar userInfo={null} onSectionChange={() => {}} />
       <div className="main-content">
         <div className="top-bar">
           <button className="menu-toggle" onClick={() => navigate(-1)} aria-label="Back">
@@ -261,34 +315,38 @@ const TeacherDetail = () => {
               <h3 style={{ marginTop: 32 }}>Select Weekly Schedule (Available Slots)</h3>
               <div className="schedule-table schedule-grid-table">
                 <div className="schedule-header">
-                  <div className="schedule-cell schedule-time-header">Time</div>
+                  <div className="schedule-cell schedule-time-header">Time ({studentRegion})</div>
                   {days.map(day => (
                     <div key={day} className="schedule-cell schedule-day-header">{day}</div>
                   ))}
                 </div>
-                {allTimes.map(time => (
-                  <div className="schedule-row" key={time}>
-                    <div className="schedule-cell schedule-time">{time}</div>
-                    {days.map(dayShort => {
-                      const slotObj = (slotsByDay[dayShort] || []).find(slot => slot.time === time);
-                      const isSelected = slotObj && selectedSlots.includes(slotObj.slotId);
-                      const isDisabled = slotObj && slotObj.isBooked === true;
-                      return (
-                        <div className="schedule-cell" key={dayShort + time}>
-                          {slotObj ? (
-                            <input
-                              type="checkbox"
-                              className={`schedule-checkbox${isSelected ? " selected" : ""}`}
-                              checked={isSelected}
-                              disabled={isDisabled}
-                              onChange={() => toggleSlot(slotObj)}
-                            />
-                          ) : null}
-                        </div>
-                      );
-                    })}
-                  </div>
-                ))}
+                {allTimesRaw.map((originalTime) => {
+                  // Convert the original time to student region for display
+                  const convertedTime = convertTimeRange(originalTime, teacherZone, studentRegion);
+                  return (
+                    <div className="schedule-row" key={originalTime}>
+                      <div className="schedule-cell schedule-time">{convertedTime}</div>
+                      {days.map(dayShort => {
+                        const slotObj = (slotsByDay[dayShort] || []).find(slot => normalizeTimeRange(slot.time) === originalTime);
+                        const isSelected = slotObj && selectedSlots.includes(slotObj.slotId);
+                        const isDisabled = slotObj && slotObj.isBooked === true;
+                        return (
+                          <div className="schedule-cell" key={dayShort + originalTime}>
+                            {slotObj ? (
+                              <input
+                                type="checkbox"
+                                className={`schedule-checkbox${isSelected ? " selected" : ""}`}
+                                checked={isSelected}
+                                disabled={isDisabled}
+                                onChange={() => toggleSlot(slotObj)}
+                              />
+                            ) : null}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                })}
               </div>
 
               <div style={{ marginTop: 24, textAlign: "right" }}>

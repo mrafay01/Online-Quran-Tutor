@@ -4,6 +4,7 @@ import Sidebar from "../Sidebar";
 import { useState, useEffect } from "react";
 import { Bell, Book, Calendar, ChevronRight, Clock, FileText, Home, LogOut, Menu, MessageSquare, Settings, User, X, Award, BookOpen, BarChart2, Users, DollarSign, TrendingUp, Star, UserCheck } from 'lucide-react';
 import "../dashboard.css";
+import { DateTime } from 'luxon';
 
 const TeacherDashboard = () => {
   const { username } = useParams();
@@ -14,6 +15,7 @@ const TeacherDashboard = () => {
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [nextSlot, setNextSlot] = useState(null);
 
   useEffect(() => {
     const handleResize = () => {
@@ -35,19 +37,43 @@ const TeacherDashboard = () => {
       setLoading(true);
       setError(null);
       try {
-        const [profileRes, dashboardRes] = await Promise.all([
+        const [profileRes, dashboardRes, slotsRes] = await Promise.all([
           fetch(`http://localhost:5000/GetTeacherProfile?username=${username}`),
           fetch(`http://localhost:5000/GetTeacherDashboard?username=${username}`),
+          fetch(`http://localhost:5000/GetSchedule?username=${username}&role=teacher`),
         ]);
         
-        if (!profileRes.ok || !dashboardRes.ok) {
+        if (!profileRes.ok || !dashboardRes.ok || !slotsRes.ok) {
           throw new Error("Failed to fetch data");
         }
         
         const profileData = await profileRes.json();
         const dashData = await dashboardRes.json();
+        const slotsData = await slotsRes.json();
         setUserData(profileData);
         setDashboardData(dashData);
+        // Compute next upcoming slot
+        let slots = Array.isArray(slotsData.schedule) ? slotsData.schedule : [];
+        // Only consider booked slots
+        slots = slots.filter(slot => slot.isBooked === true || slot.isBooked === 'true');
+        // Compute next occurrence for each slot
+        const now = DateTime.now();
+        const getNextOccurrence = (slot) => {
+          if (!slot.day || !slot.time) return null;
+          const [start] = slot.time.split('-').map(s => s.trim());
+          const daysOfWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+          const slotDayIdx = daysOfWeek.indexOf(slot.day);
+          if (slotDayIdx === -1) return null;
+          let next = now.set({ hour: 0, minute: 0, second: 0, millisecond: 0 });
+          next = next.plus({ days: (slotDayIdx - now.weekday % 7 + 7) % 7 });
+          const [h, m] = start.split(':');
+          next = next.set({ hour: parseInt(h, 10), minute: parseInt(m, 10) });
+          if (next < now) next = next.plus({ days: 7 });
+          return next;
+        };
+        const slotsWithNext = slots.map(slot => ({ ...slot, nextOccurrence: getNextOccurrence(slot) })).filter(slot => slot.nextOccurrence);
+        slotsWithNext.sort((a, b) => a.nextOccurrence - b.nextOccurrence);
+        setNextSlot(slotsWithNext.length > 0 ? slotsWithNext[0] : null);
       } catch (err) {
         setError(err.message);
       } finally {
@@ -162,28 +188,22 @@ const TeacherDashboard = () => {
           {/* Today's Schedule */}
           <section className="dashboard-section todays-schedule-section">
             <div className="section-header">
-              <h2>Today's Schedule</h2>
-              <a href="#" className="view-all" onClick={() => setActiveSection("schedule")}>
-                View All <ChevronRight size={16} />
-              </a>
+              <h2>Next Session</h2>
+              <a href="#" className="view-all" onClick={() => setActiveSection("schedule")}>View All <ChevronRight size={16} /></a>
             </div>
-            <div className="schedule-list">
-              {(dashboardData.todaysSchedule || []).map((session) => (
-                <div className="schedule-item" key={session.id}>
-                  <div className="schedule-time">
-                    <div className="time">{session.time}</div>
-                    <div className="duration">{session.duration} min</div>
-                  </div>
-                  <div className="schedule-details">
-                    <h4>{session.topic}</h4>
-                    <p className="student"><User size={14} /> {session.studentName}</p>
-                    <p className="course"><Book size={14} /> {session.course}</p>
-                  </div>
-                  <div className="schedule-actions">
-                    <button className="join-btn">Start Session</button>
+            <div className="slots-list-wrapper">
+              {!nextSlot ? (
+                <div className="slots-empty">No upcoming sessions.</div>
+              ) : (
+                <div className="slot-card" key={nextSlot.slotId}>
+                  {nextSlot.student && ( <div className="slot-student">Student: {nextSlot.student.studentName || nextSlot.student.name || nextSlot.student.username}</div> )}
+                  {nextSlot.course && nextSlot.course.courseName && ( <div className="slot-course">Course: {nextSlot.course.courseName}</div> )}
+                  <div className="slot-details">
+                    {nextSlot.day && <span className="slot-day">{nextSlot.day}</span>}
+                    {nextSlot.time && <span className="slot-time">{nextSlot.time}</span>}
                   </div>
                 </div>
-              ))}
+              )}
             </div>
           </section>
 

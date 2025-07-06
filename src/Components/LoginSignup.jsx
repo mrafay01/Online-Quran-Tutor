@@ -50,6 +50,7 @@ const LoginSignup = () => {
     // studentGrade: "", // For students
     parentOf: "", // For parents
     cnic: "",
+    languages: [], // For teachers
   });
 
   const passwordCriteria = [
@@ -188,6 +189,7 @@ const LoginSignup = () => {
           password: formData.password,
           gender: formData.gender[0],
           pic: formData.pic,
+          languages: formData.languages,
         };
 
         const response = await fetch("http://localhost:5000/SignUpStudents", {
@@ -261,6 +263,7 @@ const LoginSignup = () => {
           username: formData.username,
           password: formData.password,
           qualification: formData.qualification,
+          languages: formData.languages,
         };
 
         const response = await fetch("http://localhost:5000/SignupTeacher", {
@@ -417,67 +420,48 @@ const LoginSignup = () => {
                 onChange={handleInputChange}
               />
             </div>
+
+            <div className="input">
+              <label htmlFor="languages">Languages Known</label>
+              <Select
+                id="languages"
+                name="languages"
+                options={languageOptions}
+                isMulti
+                className="textfield"
+                value={languageOptions.filter(opt => formData.languages.includes(opt.value))}
+                onChange={selected =>
+                  setFormData(prev => ({
+                    ...prev,
+                    languages: selected ? selected.map(opt => opt.value) : [],
+                  }))
+                }
+                placeholder="Select languages"
+              />
+            </div>
           </>
         );
       case "student":
         return (
           <>
-            {/* <div className="input">
-              <label htmlFor="studentGrade">
-                <BookOpen size={18} className="input-icon" />
-                Grade Level
-              </label>
-              <input
-                type="text"
-                id="studentGrade"
-                name="studentGrade"
-                className={`textfield ${errors.studentGrade ? "error" : ""}`}
-                placeholder="Enter your grade level"
-                value={formData.studentGrade}
-                onChange={handleInputChange}
-              />
-              {errors.studentGrade && (
-                <div className="error-message">{errors.studentGrade}</div>
-              )}
-            </div> */
-            /* <div className="input">
-              <label htmlFor="region">Region</label>
-              <input
-                type="text"
-                id="region"
-                name="region"
+            <div className="input">
+              <label htmlFor="languages">Languages Known</label>
+              <Select
+                id="languages"
+                name="languages"
+                options={languageOptions}
+                isMulti
                 className="textfield"
-                placeholder="Enter your region"
-                value={formData.region || ""}
-                onChange={handleInputChange}
+                value={languageOptions.filter(opt => formData.languages.includes(opt.value))}
+                onChange={selected =>
+                  setFormData(prev => ({
+                    ...prev,
+                    languages: selected ? selected.map(opt => opt.value) : [],
+                  }))
+                }
+                placeholder="Select languages"
               />
             </div>
-            <div className="input">
-              <label htmlFor="gender">Gender</label>
-              <select
-                id="gender"
-                name="gender"
-                className="textfield"
-                value={formData.gender || ""}
-                onChange={handleInputChange}
-              >
-                <option value="">Select gender</option>
-                <option value="male">Male</option>
-                <option value="female">Female</option>
-              </select>
-            </div>
-            <div className="input">
-              <label htmlFor="pic">Profile Image URL</label>
-              <input
-                type="text"
-                id="pic"
-                name="pic"
-                className="textfield"
-                placeholder="Enter image URL"
-                value={formData.pic || ""}
-                onChange={handleInputChange}
-              />
-            </div> */}
           </>
         );
       case "parent":
@@ -545,6 +529,16 @@ const LoginSignup = () => {
       reader.readAsDataURL(file);
     }
   };
+
+  // Language options for teachers
+  const languageOptions = [
+    { value: "English", label: "English" },
+    { value: "Urdu", label: "Urdu" },
+    { value: "Arabic", label: "Arabic" },
+    { value: "French", label: "French" },
+    { value: "Spanish", label: "Spanish" },
+    // Add more as needed
+  ];
 
   return (
     <div className="container">
@@ -881,6 +875,7 @@ const LoginSignup = () => {
                     pic: "",
                     student_username: "",
                     cnic: "",
+                    languages: [],
                   });
                   setErrors({});
                 }}

@@ -34,6 +34,12 @@ import ReviewRequests from './Components/DashboardComponents/Teacher/ReviewReque
 import TeacherSchedule from './Components/DashboardComponents/Teacher/TeacherSchedule';
 import StudentSchedule from './Components/DashboardComponents/Student/StudentSchedule';
 import ParentSchedule from './Components/DashboardComponents/Parent/ParentSchedule';
+import StartClass from './Components/DashboardComponents/Teacher/StartClass';
+import JoinClass from './Components/DashboardComponents/Student/JoinClass';
+import QuranbyLessons from './Components/DashboardComponents/shared/QuranbyLessons';
+import LessonProgressbyStudents from './Components/DashboardComponents/Teacher/LessonProgressbyStudents';
+import ChildrenProgressDetail from './Components/DashboardComponents/Parent/ChildernProgressDetail';
+
 
 function DashboardRouter() {
   const { role } = useParams();
@@ -62,14 +68,14 @@ function App() {
         <Route path='/:role/:username/setting' element={<Setting/>}/>
         <Route path='/:role/:username/schedule' element={<SchedulePage/>}/>
         <Route path='/:role/:username/notifications' element={<NotificationsPage/>}/>
-        <Route path='parent/:username/dashboard' element={<ParentDashboard />} />
-        <Route path='parent/:username/my-children' element={<MyChildren />} />
-        <Route path='parent/:username/payments' element={<ParentPayments />} />
-        <Route path='parent/:username/children-progress' element={<ChildrenProgress />} />
+        <Route path=':role/:username/dashboard' element={<ParentDashboard />} />
+        <Route path=':role/:username/my-children' element={<MyChildren />} />
+        <Route path=':role/:username/payments' element={<ParentPayments />} />
+        <Route path=':role/:username/children-progress' element={<ChildrenProgress />} />
         <Route path='student/:username/dashboard' element={<StudentDashboard />} />
         <Route path='student/:username/courses' element={<StudentCourses />} />
-        <Route path='student/:username/progress' element={<StudentProgress />} />
-        <Route path='student/:username/progress/:courseId' element={<CourseProgressDetail />} />
+        <Route path=':role/:username/progress' element={<StudentProgress />} />
+        <Route path=':role/:username/progress/:courseId' element={<CourseProgressDetail />} />
         <Route path='teacher/:username/dashboard' element={<TeacherDashboard />} />
         <Route path='teacher/:username/request-incharge' element={<RequestIncharge />} />
         <Route path='teacher/:username/review-requests' element={<ReviewRequests />} />
@@ -82,6 +88,11 @@ function App() {
         <Route path='teacher/:username/schedule' element={<TeacherSchedule />} />
         <Route path='student/:username/schedule' element={<StudentSchedule />} />
         <Route path='parent/:username/schedule' element={<ParentSchedule />} />
+        <Route path=':role/:username/start-class' element={<StartClass />}/>
+        <Route path=':role/:username/join-class' element={<JoinClass />}/>
+        <Route path=':role/:username/quran-lesson' element={<QuranbyLessons />}/>
+        <Route path=':role/:username/lesson-progress' element={<LessonProgressbyStudents />}/>
+        <Route path=':role/:username/children-progress-detail' element={<ChildrenProgressDetail />}/>
       </Routes>
     </BrowserRouter>
   );

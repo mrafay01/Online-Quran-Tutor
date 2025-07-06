@@ -1,4 +1,4 @@
-/* Import your fonts */
+
 @import url("https://fonts.googleapis.com/css2?family=Alata&family=Exo+2:wght@100..900&family=Lora:wght@400..700&family=Varela+Round&display=swap");
 
 /* General styles */
@@ -121,6 +121,7 @@
 
 .schedule-time {
   font-weight: bold;
+  width: 200px;
   color: #3d4b31;
   background: rgba(92, 114, 74, 0.05);
 }

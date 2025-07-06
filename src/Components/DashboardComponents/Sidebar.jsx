@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Home, LogOut, Settings, User, X,
-  Users, Book, Calendar, Clock, BarChart2, Baby, BookOpen
+  Users, Book, Calendar, Clock, BarChart2, Baby, BookOpen, Phone
 } from 'lucide-react';
 import "./Sidebar.css";
 import * as LucideIcons from 'lucide-react';
@@ -85,6 +85,7 @@ const Sidebar = ({
           { id: "request-incharge", label: "Request Incharge", icon: Calendar, path: `/teacher/${username}/request-incharge` },
           { id: "review-requests", label: "Review Requests", icon: Calendar, path: `/teacher/${username}/review-requests` },
           { id: "slots", label: "Slots", icon: Clock, path: `/teacher/${username}/slots` },
+          { id: "start-class", label: "Start Class", icon: Phone, path: `/teacher/${username}/start-class` },
           { id: "profile", label: "Profile", icon: User, path: `/teacher/${username}/profile` },
         ];
 
@@ -92,9 +93,9 @@ const Sidebar = ({
         return [
           { id: "dashboard", label: "Dashboard", icon: Home, path: `/parent/${username}/dashboard` },
           { id: "my-children", label: "My Children", icon: Baby, path: `/parent/${username}/my-children` },
-          { id: "courses", label: "Courses", icon: BookOpen, path: `/parent/${username}/courses` },
           { id: "children-progress", label: "Children Progress", icon: BarChart2, path: `/parent/${username}/children-progress` },
           { id: "schedule", label: "Schedule", icon: Calendar, path: `/parent/${username}/schedule` },
+          { id: "slots", label: "Slots", icon: Clock, path: `/parent/${username}/slots` },
           { id: "profile", label: "Profile", icon: User, path: `/parent/${username}/profile` },
         ];
 
@@ -106,6 +107,7 @@ const Sidebar = ({
           { id: "courses", label: "Courses", icon: Book, path: `/student/${username}/courses` },
           { id: "schedule", label: "Schedule", icon: Calendar, path: `/student/${username}/schedule` },
           { id: "slots", label: "Slots", icon: Clock, path: `/student/${username}/slots` },
+          { id: "join-class", label: "Join Class", icon: Phone, path: `/student/${username}/join-class` },
           { id: "progress", label: "Progress", icon: BarChart2, path: `/student/${username}/progress` },
           { id: "profile", label: "Profile", icon: User, path: `/student/${username}/profile` },
         ];

@@ -111,14 +111,31 @@
   justify-content: space-between;
   align-items: center;
   border-left: 5px solid #b6e2b6;
+  transition: all 0.3s ease;
+  position: relative;
+}
+.lesson-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  background: #f8f9fa;
 }
 .lesson-card.completed {
   border-left: 5px solid #4a5c2c;
   background: #f6f9f2;
 }
+.lesson-card.completed:hover {
+  background: #e8f5e8;
+}
+.lesson-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
 .lesson-title {
   font-weight: 500;
   color: #2d4a2d;
+  margin-bottom: 4px;
 }
 .lesson-status {
   font-size: 0.98em;
@@ -130,6 +147,20 @@
 .lesson-pending {
   color: #b77c2a;
   font-weight: 500;
+}
+
+.lesson-hint {
+  font-size: 0.85em;
+  color: #6c757d;
+  font-style: italic;
+  margin-top: 8px;
+  opacity: 0.7;
+  transition: opacity 0.3s ease;
+}
+
+.lesson-card:hover .lesson-hint {
+  opacity: 1;
+  color: #4a5c2c;
 }
 
 @media (max-width: 900px) {
