@@ -1,0 +1,516 @@
+/* Quran Lesson Container */
+.quran-lesson-container {
+  min-height: 100vh;
+  background: #f6f9f2;
+  padding: 24px 0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Lesson Header */
+.lesson-header {
+  background: #fff;
+  border-radius: 14px;
+  padding: 20px 32px;
+  margin-bottom: 28px;
+  box-shadow: 0 2px 8px rgba(74,92,44,0.07);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 18px;
+}
+
+.lesson-header h1 {
+  color: #4a5c2c;
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+.lesson-header p {
+  color: #6c757d;
+  margin: 5px 0 0 0;
+  font-size: 1.08rem;
+}
+
+.back-btn {
+  background: #4a5c2c;
+  color: #fff;
+  border: none;
+  padding: 10px 22px;
+  border-radius: 22px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 600;
+  transition: all 0.2s;
+  box-shadow: 0 2px 8px rgba(74,92,44,0.13);
+}
+
+.back-btn:hover {
+  background: #b6e2b6;
+  color: #4a5c2c;
+  box-shadow: 0 4px 16px rgba(74,92,44,0.13);
+}
+
+/* Lesson Content Layout */
+.lesson-content {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 22px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* Quran Text Section */
+.quran-text-section {
+  background: #fff;
+  border-radius: 14px;
+  padding: 28px 28px 18px 28px;
+  box-shadow: 0 2px 8px rgba(74,92,44,0.07);
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.quran-text {
+  direction: rtl;
+  text-align: right;
+  line-height: 2.5;
+}
+
+/* Ayah Container */
+.ayah-container {
+  margin-bottom: 24px;
+  padding: 18px 18px 12px 18px;
+  border-radius: 10px;
+  border: 2px solid #e6eede;
+  background: #f6f9f2;
+  transition: all 0.2s;
+  cursor: pointer;
+  position: relative;
+  box-shadow: 0 1px 4px rgba(74,92,44,0.06);
+}
+
+.ayah-container:hover {
+  background: #e6eede;
+  border-color: #b6e2b6;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(74,92,44,0.13);
+}
+
+.ayah-container.active {
+  background: #b6e2b6;
+  color: #2d4a2d;
+  border-color: #4a5c2c;
+  box-shadow: 0 4px 16px rgba(74,92,44,0.13);
+}
+
+.ayah-container.bookmarked {
+  border-left: 5px solid #b77c2a;
+  background: #fffbe6;
+}
+
+.ayah-container.active.bookmarked {
+  border-left: 5px solid #b77c2a;
+}
+
+/* Ayah Header */
+.ayah-header {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  margin-bottom: 10px;
+  gap: 16px;
+  direction: ltr;
+}
+
+.ayah-number {
+  background: #4a5c2c;
+  color: #fff;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 1.08rem;
+  box-shadow: 0 2px 8px rgba(74,92,44,0.13);
+}
+
+.ayah-container.active .ayah-number {
+  background: #fff;
+  color: #4a5c2c;
+  border: 2px solid #4a5c2c;
+}
+
+.ayah-actions {
+  display: flex;
+  gap: 8px;
+  margin-left: 10px;
+}
+
+.bookmark-btn {
+  background: #fff;
+  border: 2px solid #b77c2a;
+  color: #b77c2a;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 1.1rem;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 1px 4px rgba(183,124,42,0.08);
+}
+
+.bookmark-btn:hover {
+  background: #b77c2a;
+  color: #fff;
+  border-color: #b77c2a;
+}
+
+.ayah-container.active .bookmark-btn {
+  background: #fffbe6;
+  color: #b77c2a;
+  border-color: #b77c2a;
+}
+
+/* Ayah Text */
+.ayah-text {
+  font-size: 1.5rem;
+  font-weight: 500;
+  line-height: 2.4;
+  color: #2d4a2d;
+  text-align: justify;
+  font-family: 'Amiri', 'Scheherazade', serif;
+  margin-bottom: 0.5em;
+}
+
+.ayah-container.active .ayah-text {
+  color: #4a5c2c;
+}
+
+/* Ayah Note */
+.ayah-note {
+  margin-top: 10px;
+  padding: 10px 14px;
+  background: #e6eede;
+  border-radius: 7px;
+  border-left: 4px solid #4a5c2c;
+  font-size: 0.97rem;
+  color: #2d4a2d;
+}
+
+.ayah-container.active .ayah-note {
+  background: #b6e2b6;
+  border-left-color: #4a5c2c;
+  color: #2d4a2d;
+}
+
+/* quran-siderbar */
+.quran-siderbar {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+/* User-Specific Features */
+.student-features,
+.parent-features,
+.teacher-features {
+  background: #fff;
+  border-radius: 14px;
+  padding: 22px 20px;
+  box-shadow: 0 2px 8px rgba(74,92,44,0.07);
+}
+
+.student-features h3,
+.parent-features h3,
+.teacher-features h3 {
+  color: #4a5c2c;
+  margin: 0 0 16px 0;
+  font-size: 1.15rem;
+  font-weight: 600;
+}
+
+/* Progress Section */
+.progress-section,
+.child-progress {
+  margin-bottom: 18px;
+}
+
+.progress-bar {
+  width: 100%;
+  height: 12px;
+  background: #e6eede;
+  border-radius: 8px;
+  overflow: hidden;
+  margin: 10px 0;
+}
+
+.progress-fill {
+  height: 100%;
+  background: #4a5c2c;
+  border-radius: 8px;
+  transition: width 0.5s ease;
+}
+
+/* Study Tools */
+.study-tools,
+.monitoring-tools,
+.teaching-tools {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.tool-btn {
+  background: #4a5c2c;
+  color: #fff;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 7px;
+  cursor: pointer;
+  font-size: 0.97rem;
+  font-weight: 500;
+  transition: all 0.2s;
+  text-align: left;
+  box-shadow: 0 1px 4px rgba(74,92,44,0.13);
+}
+
+.tool-btn:hover {
+  background: #b6e2b6;
+  color: #4a5c2c;
+}
+
+.tool-btn:disabled {
+  background: #b6e2b6;
+  color: #4a5c2c;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* Student Info */
+.student-info {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #e6eede;
+}
+
+.student-info h3 {
+  margin-bottom: 10px;
+}
+
+.student-info p {
+  margin: 7px 0;
+  color: #6c757d;
+  font-size: 0.97rem;
+}
+
+/* Lesson Info */
+.lesson-info {
+  background: #fff;
+  border-radius: 14px;
+  padding: 20px 18px;
+  box-shadow: 0 2px 8px rgba(74,92,44,0.07);
+}
+
+.lesson-info h3 {
+  color: #4a5c2c;
+  margin: 0 0 14px 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.lesson-info p {
+  margin: 8px 0;
+  color: #6c757d;
+  font-size: 0.97rem;
+}
+
+.lesson-info strong {
+  color: #2d4a2d;
+}
+
+/* Loading Spinner */
+.loading-spinner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 60vh;
+  color: #4a5c2c;
+}
+
+.spinner {
+  width: 44px;
+  height: 44px;
+  border: 4px solid #e6eede;
+  border-top: 4px solid #4a5c2c;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 18px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Error Message */
+.error-message {
+  text-align: center;
+  padding: 40px 16px;
+  color: #4a5c2c;
+}
+
+.error-message h2 {
+  color: #b77c2a;
+  margin-bottom: 12px;
+}
+
+.error-message button {
+  background: #4a5c2c;
+  color: #fff;
+  border: none;
+  padding: 10px 22px;
+  border-radius: 22px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 600;
+  margin-top: 16px;
+  transition: all 0.2s;
+}
+
+.error-message button:hover {
+  background: #b6e2b6;
+  color: #4a5c2c;
+  box-shadow: 0 2px 8px rgba(74,92,44,0.13);
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+  .lesson-content {
+    grid-template-columns: 1fr 260px;
+    gap: 16px;
+  }
+  .ayah-text {
+    font-size: 1.2rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .lesson-content {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+  .lesson-header {
+    flex-direction: column;
+    text-align: center;
+  }
+  .lesson-header h1 {
+    font-size: 1.3rem;
+  }
+  .quran-text-section {
+    padding: 14px;
+  }
+  .ayah-text {
+    font-size: 1.1rem;
+    line-height: 2.1;
+  }
+  .ayah-container {
+    padding: 10px;
+  }
+  .quran-siderbar {
+    order: -1;
+  }
+}
+
+@media (max-width: 480px) {
+  .quran-lesson-container {
+    padding: 8px;
+  }
+  .lesson-header {
+    padding: 10px;
+  }
+  .lesson-header h1 {
+    font-size: 1.1rem;
+  }
+  .ayah-text {
+    font-size: 0.98rem;
+  }
+  .ayah-actions {
+    flex-direction: column;
+    gap: 4px;
+  }
+  .bookmark-btn {
+    width: 26px;
+    height: 26px;
+    font-size: 0.95rem;
+  }
+}
+
+/* Scrollbar Styling */
+.quran-text-section::-webkit-scrollbar {
+  width: 8px;
+}
+.quran-text-section::-webkit-scrollbar-track {
+  background: #e6eede;
+  border-radius: 4px;
+}
+.quran-text-section::-webkit-scrollbar-thumb {
+  background: #b6e2b6;
+  border-radius: 4px;
+}
+.quran-text-section::-webkit-scrollbar-thumb:hover {
+  background: #4a5c2c;
+}
+
+/* Focus States for Accessibility */
+.tool-btn:focus,
+.back-btn:focus,
+.bookmark-btn:focus {
+  outline: 2px solid #b77c2a;
+  outline-offset: 2px;
+}
+
+/* Animation for ayah transitions */
+.ayah-container {
+  animation: fadeInUp 0.5s ease-out;
+}
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Hover effects for interactive elements */
+.ayah-container:hover .ayah-actions {
+  opacity: 1;
+}
+.ayah-actions {
+  opacity: 0.85;
+  transition: opacity 0.2s;
+}
+
+/* Custom scrollbar for webkit browsers */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #e6eede;
+}
+::-webkit-scrollbar-thumb {
+  background: #b6e2b6;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #4a5c2c;
+}

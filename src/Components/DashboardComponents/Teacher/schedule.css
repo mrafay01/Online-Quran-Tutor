@@ -1,0 +1,119 @@
+.schedule-table-wrapper {
+  margin: 32px auto;
+  overflow-x: auto;
+  background: #fff;
+  padding: 24px 10px;
+  border-radius: 14px;
+  max-width: 950px;
+  border: 1px solid #ececec;
+  box-shadow: none;
+}
+
+.schedule-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: "Segoe UI", Arial, sans-serif;
+  font-size: 1rem;
+  text-align: center;
+  background: #fff;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.schedule-table th,
+.schedule-table td {
+  vertical-align: middle;
+  min-width: 100px;
+  height: 48px;
+  padding: 0;
+  font-size: 1rem;
+  font-weight: 400;
+  border: 1px solid #f0f0f0;
+}
+
+.schedule-table th {
+  background: #f7f7fa;
+  color: #232323;
+  font-weight: 600;
+  border-bottom: 2px solid #e5e5e5;
+  letter-spacing: 0.01em;
+}
+
+.schedule-table .time-cell {
+  background: #f7f7fa;
+  color: #232323;
+  font-weight: 500;
+  border-right: 1px solid #e5e5e5;
+}
+
+.schedule-table .slot-cell {
+  border-radius: 0;
+  padding: 0;
+  min-width: 100px;
+  height: 48px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  font-size: 1rem;
+  font-weight: 400;
+}
+
+.slot-cell.available {
+  background: #eafbe7;
+  color: #256029;
+}
+
+.slot-cell.available:hover, .slot-cell.available:focus {
+  background: #d2f5c8;
+  color: #14532d;
+  outline: none;
+}
+
+.slot-cell.booked {
+  background: #fde2e2;
+  color: #b91c1c;
+  text-decoration: line-through;
+  opacity: 0.8;
+}
+
+.slot-cell.unavailable {
+  background: #f4f4f4;
+  color: #b0b0b0;
+  font-style: italic;
+}
+
+.error-message {
+  color: #e11d48;
+  font-weight: 500;
+  margin: 10px 0;
+  background: #fef2f2;
+  border-left: 3px solid #e11d48;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 0.98rem;
+}
+
+@media (max-width: 900px) {
+  .schedule-table-wrapper {
+    padding: 10px 0;
+    max-width: 100vw;
+  }
+  .schedule-table th, .schedule-table td {
+    font-size: 0.92rem;
+    min-width: 70px;
+    height: 38px;
+  }
+}
+
+@media (max-width: 600px) {
+  .schedule-table {
+    font-size: 0.85rem;
+  }
+  .schedule-table th, .schedule-table td {
+    min-width: 50px;
+    height: 32px;
+    font-size: 0.85rem;
+  }
+  .schedule-table-wrapper {
+    padding: 4px 0;
+  }
+}

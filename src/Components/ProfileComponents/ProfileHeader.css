@@ -1,0 +1,150 @@
+@import url("https://fonts.googleapis.com/css2?family=Alata&family=Exo+2:wght@100..900&family=Lora:wght@400..700&family=Varela+Round&display=swap");
+
+/* Overall Profile Header */
+.profile-header {
+  width: 100%;
+  background: #f6f6e6;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  font-family: "Alata", sans-serif;
+  padding-bottom: 50px;
+  overflow-x: hidden;
+}
+
+/* Banner Image */
+.banner {
+  width: 100%;
+  height: 400px;
+  background: url("../Assets/Images/BG-Profile.jpg") center/cover no-repeat;
+  position: relative;
+}
+
+/* Profile Content Wrapper */
+.profile-content {
+  width: 90%;
+  max-width: 1200px;
+  background: #ffffff;
+  margin-top: -100px;
+  border-radius: 20px;
+  padding: 40px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  gap: 40px;
+  position: relative;
+}
+
+/* Avatar */
+.avatar {
+  width: 180px;
+  height: 180px;
+  object-fit: cover;
+  background-color: #ccc;
+  border-radius: 50%;
+  border: 6px solid #ffffff;
+  flex-shrink: 0;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+/* Name and Info */
+.profile-details {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  color: #3d4b31;
+}
+
+.profile-name {
+  font-size: 2rem;
+  font-weight: bold;
+}
+
+.profile-role {
+  font-size: 1.2rem;
+  color: #5c724a;
+}
+
+.profile-info {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 10px;
+  font-size: 1rem;
+  color: #5c724a;
+}
+
+.profile-role {
+  font-size: 1.1rem;
+  color: #5c724a;
+}
+
+.profile-rating {
+  margin-top: 10px;
+  color: #ffc107;
+  align-items: left;
+  gap: 5px;
+  font-size: 1rem;
+}
+
+.star {
+  font-size: 1.2rem;
+}
+
+.profile-quote {
+  margin-top: 5px;
+  margin-bottom: 10px;
+  font-style: italic;
+  color: #5c724a;
+  font-size: 1rem;
+}
+
+.profile-info p {
+  display: flex;
+  align-items: center;
+}
+
+.icon {
+  margin-right: 10px;
+  font-size: 1.1rem;
+}
+
+/* Responsive Layout */
+@media (max-width: 992px) {
+  .profile-content {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 30px;
+  }
+
+  .avatar {
+    width: 140px;
+    height: 140px;
+  }
+
+  .profile-name {
+    font-size: 1.8rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .banner {
+    height: 200px;
+  }
+
+  .avatar {
+    width: 120px;
+    height: 120px;
+  }
+
+  .profile-name {
+    font-size: 1.6rem;
+  }
+
+  .profile-content {
+    padding: 20px;
+    gap: 20px;
+  }
+}

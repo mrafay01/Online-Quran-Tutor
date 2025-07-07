@@ -1,0 +1,347 @@
+@import url("https://fonts.googleapis.com/css2?family=Alata&family=Exo+2:wght@100..900&family=Lora:wght@400..700&family=Varela+Round&display=swap");
+
+/* Main Courses Section */
+.Courses {
+  padding-top: 50px;
+  position: relative;
+  min-height: 88vh;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow: hidden;
+}
+
+/* Background with subtle gradient */
+.Courses::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(to bottom, #f9f9e9, #f6f6e6);
+  z-index: -2;
+  box-shadow: 
+    inset 0 0 30px rgba(61, 77, 48, 0.2),
+    inset 0 0 60px rgba(61, 77, 48, 0.1);
+}
+
+/* Section Heading */
+.Courses h2 {
+  position: relative;
+  font-size: 2.8rem;
+  font-weight: 700;
+  color: #3d4d30;
+  letter-spacing: 0.2rem;
+  font-family: "Alata", sans-serif;
+  margin-bottom: 60px;
+  text-transform: uppercase;
+  text-align: center;
+  padding-bottom: 15px;
+}
+
+/* Heading underline */
+.Courses h2::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80px;
+  height: 4px;
+  background: linear-gradient(to right, rgba(61, 77, 48, 0.5), rgba(61, 77, 48, 0.9), rgba(61, 77, 48, 0.5));
+  border-radius: 2px;
+}
+
+/* Content Container */
+.content-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 85%;
+  max-width: 1400px;
+  gap: 270px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 1;
+}
+
+/* Vertical Lines (Left Side) */
+.parallel-lines {
+  position: absolute;
+  top: 0;           
+  left: 100px;          
+  bottom: 0;        
+  width: 50px;     
+  display: flex;
+  flex-direction: row; 
+  gap: 10px;        
+  pointer-events: none;
+  z-index: 0;
+}
+
+.line {
+  width: 3px;
+  height: 100%;   /* Full height of .parallel-lines */
+  background-color: rgba(38, 80, 5, 0.65);
+}
+/* Horizontal Lines (Bottom) */
+.parallel-lines2 {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  pointer-events: none;
+  z-index: 0;
+  bottom: 60px;
+}
+
+.line2 {
+  height: 3px;
+  width: 100%;
+  background-color: rgba(38, 80, 5, 0.65);
+}
+
+/* Grid Container */
+.grid {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  grid-template-rows: repeat(2, 1fr);
+  gap: 30px;
+  max-width: 430px;
+  position: relative;
+}
+
+/* Grid Items */
+.grid-items {
+  aspect-ratio: 1/1;
+  position: relative;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 
+    0 10px 30px rgba(0, 0, 0, 0.08),
+    0 5px 15px rgba(0, 0, 0, 0.05);
+  transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+  background-color: #f7f7ed;
+  z-index: 2;
+}
+
+.grid-items:hover {
+  transform: translateY(-8px);
+  box-shadow: 
+    0 15px 35px rgba(61, 77, 48, 0.2),
+    0 10px 25px rgba(61, 77, 48, 0.1);
+}
+
+/* Grid Item Links */
+.grid-items a {
+  text-decoration: none;
+  display: block;
+  height: 100%;
+  width: 100%;
+}
+
+/* Items Inside Grid */
+.items {
+  height: 100%;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.1));
+  backdrop-filter: blur(5px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Hover effect background */
+.items::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, rgba(61, 77, 48, 0.1), rgba(61, 77, 48, 0.05));
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+.grid-items:hover .items::before {
+  opacity: 1;
+}
+
+/* Course Title */
+.items p {
+  font-size: 1.5rem;
+  color: #3d4d30;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1rem;
+  transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+  position: relative;
+  padding: 10px 20px;
+  border-radius: 8px;
+}
+
+/* Title hover effect */
+.grid-items:hover .items p {
+  letter-spacing: 0.2rem;
+  color: #265005;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Image Container */
+.img {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  max-width: 45%;
+  position: relative;
+  z-index: 2;
+}
+
+/* Image Styling */
+.img img {
+  width: 100%;
+  height: auto;
+  border-radius: 16px;
+  box-shadow: 
+    0 15px 35px rgba(0, 0, 0, 0.1),
+    0 5px 15px rgba(0, 0, 0, 0.05);
+  transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+  object-fit: cover;
+}
+
+.img:hover img {
+  transform: scale(1.02);
+  box-shadow: 
+    0 20px 40px rgba(61, 77, 48, 0.15),
+    0 10px 20px rgba(61, 77, 48, 0.1);
+}
+
+/* Decorative elements */
+.Courses::after {
+  content: "";
+  position: absolute;
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(61, 77, 48, 0.05) 0%, rgba(61, 77, 48, 0) 70%);
+  bottom: 10%;
+  right: 5%;
+  z-index: 0;
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+  .content-container {
+    width: 90%;
+    gap: 40px;
+  }
+  
+  .Courses h2 {
+    font-size: 2.5rem;
+  }
+}
+
+@media (max-width: 992px) {
+  .content-container {
+    width: 95%;
+    gap: 30px;
+  }
+  
+  .grid {
+    max-width: 450px;
+  }
+  
+  .items p {
+    font-size: 1.3rem;
+  }
+  
+  .Courses h2 {
+    font-size: 2.3rem;
+    margin-bottom: 50px;
+  }
+}
+
+@media (max-width: 768px) {
+  .Courses {
+    padding: 80px 0 60px;
+  }
+  
+  .content-container {
+    flex-direction: column;
+    gap: 50px;
+  }
+  
+  .grid {
+    max-width: 500px;
+    width: 100%;
+  }
+  
+  .img {
+    max-width: 90%;
+    order: 2;
+  }
+  
+  .parallel-lines, .parallel-lines2 {
+    opacity: 0.3;
+  }
+  
+  .Courses h2 {
+    font-size: 2.2rem;
+    margin-bottom: 40px;
+  }
+}
+
+@media (max-width: 576px) {
+  .Courses {
+    padding: 60px 0 40px;
+  }
+  
+  .content-container {
+    width: 90%;
+    gap: 40px;
+  }
+  
+  .grid {
+    gap: 20px;
+  }
+  
+  .items p {
+    font-size: 1.2rem;
+  }
+  
+  .Courses h2 {
+    font-size: 1.8rem;
+    letter-spacing: 0.15rem;
+    margin-bottom: 30px;
+  }
+  
+  .parallel-lines, .parallel-lines2 {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .grid {
+    grid-template-columns: 1fr;
+    max-width: 280px;
+  }
+  
+  .grid-items {
+    aspect-ratio: 16/9;
+  }
+  
+  .items p {
+    font-size: 1.1rem;
+  }
+}

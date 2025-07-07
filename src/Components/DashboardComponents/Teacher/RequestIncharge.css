@@ -1,0 +1,202 @@
+
+
+.request-incharge-container {
+  display: flex;
+  background: var(--background);
+  min-height: 100vh;
+}
+
+.request-incharge-content {
+  flex: 1;
+  margin-left: 280px;
+  padding: 2.5rem 3rem;
+  background: var(--background);
+  font-family: "Alata", sans-serif;
+}
+
+.request-incharge-title {
+  font-size: 2.2rem;
+  margin-bottom: 2rem;
+  font-weight: 700;
+  color: var(--primary-dark);
+}
+
+.request-incharge-section {
+  margin-bottom: 2.5rem;
+}
+
+.request-incharge-step-title {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-bottom: 0.7rem;
+  color: var(--primary);
+}
+
+.request-incharge-box {
+  background: var(--white);
+  padding: 1.5rem 1.2rem;
+  border-radius: 20px;
+  box-shadow: var(--shadow);
+  margin-bottom: 0.5rem;
+}
+
+/* Slot list styling */
+.request-incharge-box ul {
+  margin: 0;
+  padding: 0;
+}
+.request-incharge-box li {
+  margin-bottom: 0.7rem;
+  padding: 0.7rem 1rem;
+  border-radius: 8px;
+  transition: background 0.2s;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+.request-incharge-box li:hover {
+  background: #f0f4fa;
+}
+.request-incharge-box input[type="checkbox"],
+.request-incharge-box input[type="radio"] {
+  accent-color: #007bff;
+  width: 18px;
+  height: 18px;
+}
+
+/* Teacher list styling */
+.request-incharge-box .teacher-card {
+  display: flex;
+  align-items: center;
+  padding: 0.7rem 1rem;
+  border-radius: 8px;
+  background: #f8fafc;
+  margin-bottom: 0.7rem;
+  box-shadow: 0 1px 4px rgba(44, 62, 80, 0.05);
+  transition: box-shadow 0.2s, background 0.2s;
+}
+.request-incharge-box .teacher-card:hover {
+  background: #eaf3ff;
+  box-shadow: 0 2px 8px rgba(44, 62, 80, 0.10);
+}
+.request-incharge-box .teacher-info {
+  margin-left: 12px;
+}
+.request-incharge-box .teacher-name {
+  font-weight: 600;
+  color: #2d3a4a;
+}
+.request-incharge-box .teacher-courses {
+  font-size: 0.95rem;
+  color: #5a6b7b;
+}
+
+.request-incharge-button {
+  padding: 0.7rem 2.2rem;
+  font-size: 1.1rem;
+  background: linear-gradient(90deg, var(--primary) 60%, var(--primary-dark) 100%);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 700;
+  margin-top: 1.2rem;
+  box-shadow: var(--shadow);
+  transition: background 0.2s, box-shadow 0.2s;
+  font-family: "Alata", sans-serif;
+}
+.request-incharge-button:disabled {
+  background: #b0b0b0;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+.request-incharge-button:hover:not(:disabled) {
+  background: linear-gradient(90deg, var(--primary-dark) 60%, var(--primary) 100%);
+  box-shadow: var(--shadow-hover);
+}
+
+/* Success/Error message styling */
+.request-incharge-content .success-message {
+  color: #1ca97a;
+  background: #e6f9f2;
+  border-left: 4px solid #1ca97a;
+  padding: 0.8rem 1.2rem;
+  border-radius: 10px;
+  margin-top: 1.2rem;
+  font-weight: 500;
+}
+.request-incharge-content .error-message {
+  color: #d7263d;
+  background: #fff0f3;
+  border-left: 4px solid #d7263d;
+  padding: 0.8rem 1.2rem;
+  border-radius: 10px;
+  margin-top: 1.2rem;
+  font-weight: 500;
+}
+
+.slot-grid-wrapper {
+  overflow-x: auto;
+  margin-bottom: 1rem;
+}
+.slot-grid-table {
+  border-collapse: separate;
+  border-spacing: 0;
+  width: 100%;
+  background: var(--white);
+  box-shadow: var(--shadow);
+  border-radius: 20px;
+  margin-bottom: 0.5rem;
+}
+.slot-grid-table th,
+.slot-grid-table td {
+  text-align: center;
+  padding: 0.5rem 0.7rem;
+  min-width: 90px;
+  font-family: "Alata", sans-serif;
+}
+.slot-grid-table th {
+  background: var(--background-dark);
+  color: var(--primary-dark);
+  font-weight: 700;
+  font-size: 1rem;
+}
+.slot-grid-time {
+  background: var(--background-dark);
+  font-weight: 600;
+  color: var(--primary-dark);
+  border-right: 1px solid var(--border);
+}
+.slot-booked-cell {
+  background: #e6f9f2;
+  border-radius: 12px;
+  box-shadow: 0 1px 4px rgba(92, 114, 74, 0.04);
+}
+.slot-empty-cell {
+  background: #f5f5f5;
+  color: #b0b0b0;
+  opacity: 0.6;
+  border-radius: 12px;
+}
+.slot-checkbox-label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+}
+.slot-checkbox-cue {
+  font-size: 0.85rem;
+  color: var(--primary);
+  font-weight: 700;
+  margin-top: 2px;
+}
+.slot-course-cue {
+  font-size: 0.8rem;
+  color: var(--primary-dark);
+  margin-top: 1px;
+}
+.slot-disabled-cue {
+  color: #b0b0b0;
+  font-size: 1.2rem;
+  font-weight: 600;
+} 
