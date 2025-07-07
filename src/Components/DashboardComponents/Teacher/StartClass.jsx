@@ -4,6 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { DateTime } from 'luxon';
 import AgoraRTC from 'agora-rtc-sdk-ng';
 import '../dashboard.css';
+import { useVideoCall } from '../shared/VideoCallProvider';
 
 const AGORA_APP_ID = "cd14423fdd0849a8a685e966616d0756";
 
@@ -13,16 +14,10 @@ const StartClass = () => {
   const [nextSlot, setNextSlot] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [callStarted, setCallStarted] = useState(false);
-  const [agoraClient, setAgoraClient] = useState(null);
-  const [joined, setJoined] = useState(false);
-  const [sessionId, setSessionId] = useState(null);
+  const { callActive, startCall, endCall } = useVideoCall();
   const localVideoRef = useRef(null);
   const remoteVideoRef = useRef(null);
-  const [audioMuted, setAudioMuted] = useState(false);
-  const [videoMuted, setVideoMuted] = useState(false);
-  const [audioTrackObj, setAudioTrackObj] = useState(null);
-  const [videoTrackObj, setVideoTrackObj] = useState(null);
+  const [upcomingSlots, setUpcomingSlots] = useState([]);
 
   // Replace with your real token/channel logic
   const channelName = nextSlot ? `class_${nextSlot.slotId}` : 'default_channel';
@@ -54,6 +49,7 @@ const StartClass = () => {
         };
         const slotsWithNext = slots.map(slot => ({ ...slot, nextOccurrence: getNextOccurrence(slot) })).filter(slot => slot.nextOccurrence);
         slotsWithNext.sort((a, b) => a.nextOccurrence - b.nextOccurrence);
+        setUpcomingSlots(slotsWithNext.slice(0, 3));
         setNextSlot(slotsWithNext.length > 0 ? slotsWithNext[0] : null);
       } catch (err) {
         setError(err.message);
@@ -64,30 +60,56 @@ const StartClass = () => {
     if (username) fetchSlots();
   }, [username]);
 
-  // Start call API integration
-  const handleStartCall = async () => {
-    if (!nextSlot) return;
+  // Helper to check if a slot is already sessioned for more than 10 mins
+  const isSlotSessionedTooOld = async (slot) => {
+    // Check backend for active session for this slot
+    const res = await fetch(`http://localhost:5000/api/video-call/active?studentId=${slot.student?.username}&slotId=${slot.slotId}`);
+    if (!res.ok) return false;
+    const data = await res.json();
+    if (data.active && data.session && data.session.CallStartTime) {
+      const started = DateTime.fromISO(data.session.CallStartTime);
+      const now = DateTime.now();
+      return now.diff(started, 'minutes').minutes > 10;
+    }
+    return false;
+  };
+
+  // Modified handleStartCall to accept slot
+  const handleStartCall = async (slot) => {
+    if (!slot) return;
+    // Check if session is too old
+    const tooOld = await isSlotSessionedTooOld(slot);
+    if (tooOld) {
+      setError('This slot already has a session started more than 10 minutes ago. You cannot start a new class for this slot.');
+      return;
+    }
     try {
+      const channel = `class_${slot.slotId}`;
       const res = await fetch('http://localhost:5000/api/video-call/start', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          teacherId: nextSlot.teacher?.username || username,
-          studentId: nextSlot.student?.username,
-          slotId: nextSlot.slotId,
-          roomId: channelName,
-          courseId: nextSlot.course?.courseId
+          teacherId: slot.teacher?.username || username,
+          studentId: slot.student?.username,
+          slotId: slot.slotId,
+          roomId: channel,
+          courseId: slot.course?.courseId
         })
       });
       if (!res.ok) throw new Error('Failed to start call session');
       const data = await res.json();
-      setSessionId(data.SessionID || data.sessionId || data.id);
-      setCallStarted(true);
+      await startCall({
+        channel,
+        username,
+        token: null,
+        role: 'teacher',
+        slotId: slot.slotId,
+        sessionId: data.SessionID || data.sessionId || data.id,
+      });
       // --- Auto open QuranbyLessons with first not completed lesson ---
-      // Fetch lessons for this student and course
-      const studentUsername = nextSlot.student?.username;
-      const teacherUsername = nextSlot.teacher?.username || username;
-      const courseId = nextSlot.course?.courseId;
+      const studentUsername = slot.student?.username;
+      const teacherUsername = slot.teacher?.username || username;
+      const courseId = slot.course?.courseId;
       if (studentUsername && courseId) {
         const lessonsRes = await fetch(`http://localhost:5000/GetCourseLessons?username=${encodeURIComponent(studentUsername)}&courseId=${encodeURIComponent(courseId)}`);
         if (lessonsRes.ok) {
@@ -95,7 +117,6 @@ const StartClass = () => {
           const lessons = Array.isArray(lessonsData.lessons) ? lessonsData.lessons : [];
           const firstNotCompleted = lessons.find(l => !l.completed);
           if (firstNotCompleted) {
-            // Extract surah and ruku from title
             const title = firstNotCompleted.title || "";
             const surahMatch = title.match(/^([^(]+)\s*\(Ruku\s*(\d+)\)/i);
             let surahName = surahMatch ? surahMatch[1].trim() : "Al-Fatiha";
@@ -113,7 +134,6 @@ const StartClass = () => {
           }
         }
       }
-      // --- End auto open logic ---
     } catch (err) {
       setError(err.message);
     }
@@ -121,126 +141,7 @@ const StartClass = () => {
 
   // End call API integration
   const handleEndCall = async () => {
-    if (!sessionId) {
-      setCallStarted(false);
-      setJoined(false);
-      return;
-    }
-    try {
-      await fetch('http://localhost:5000/api/video-call/end', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sessionId })
-      });
-    } catch (err) {
-      // Optionally handle error
-    }
-    setCallStarted(false);
-    setJoined(false);
-  };
-
-  // Agora logic
-  useEffect(() => {
-    if (!callStarted) return;
-    let client = null;
-    let audioTrack = null;
-    let videoTrack = null;
-
-    const startAgora = async () => {
-      client = AgoraRTC.createClient({ mode: 'rtc', codec: 'vp8' });
-      setAgoraClient(client);
-
-      // Join channel
-      await client.join(AGORA_APP_ID, channelName, token || null, username);
-
-      // Try to get both audio and video
-      try {
-        [audioTrack, videoTrack] = await AgoraRTC.createMicrophoneAndCameraTracks();
-      } catch (err) {
-        // Try audio only if video fails
-        try {
-          audioTrack = await AgoraRTC.createMicrophoneAudioTrack();
-          // Optionally, show a message: "No camera detected, joining with audio only."
-        } catch (audioErr) {
-          setError("No microphone or camera detected.");
-          return;
-        }
-      }
-
-      setAudioTrackObj(audioTrack);
-      setVideoTrackObj(videoTrack);
-
-      // Play local video if available
-      if (localVideoRef.current && videoTrack) {
-        videoTrack.play(localVideoRef.current);
-      }
-
-      // Publish tracks
-      if (audioTrack && videoTrack) {
-        await client.publish([audioTrack, videoTrack]);
-      } else if (audioTrack) {
-        await client.publish([audioTrack]);
-      }
-
-      setJoined(true);
-
-      // Subscribe to remote user
-      client.on('user-published', async (user, mediaType) => {
-        await client.subscribe(user, mediaType);
-        if (mediaType === 'video' && remoteVideoRef.current) {
-          user.videoTrack.play(remoteVideoRef.current);
-        }
-        if (mediaType === 'audio') {
-          user.audioTrack.play();
-        }
-      });
-
-      // Cleanup on leave
-      client.on('user-unpublished', (user, mediaType) => {
-        if (mediaType === 'video' && remoteVideoRef.current) {
-          remoteVideoRef.current.innerHTML = '';
-        }
-      });
-    };
-
-    startAgora();
-
-    return () => {
-      if (client) {
-        client.leave();
-      }
-      if (audioTrack) audioTrack.close();
-      if (videoTrack) videoTrack.close();
-      setAudioTrackObj(null);
-      setVideoTrackObj(null);
-      setJoined(false);
-    };
-    // eslint-disable-next-line
-  }, [callStarted]);
-
-  // Mute/unmute handlers
-  const handleToggleAudio = async () => {
-    if (audioTrackObj) {
-      if (audioMuted) {
-        await audioTrackObj.setEnabled(true);
-        setAudioMuted(false);
-      } else {
-        await audioTrackObj.setEnabled(false);
-        setAudioMuted(true);
-      }
-    }
-  };
-
-  const handleToggleVideo = async () => {
-    if (videoTrackObj) {
-      if (videoMuted) {
-        await videoTrackObj.setEnabled(true);
-        setVideoMuted(false);
-      } else {
-        await videoTrackObj.setEnabled(false);
-        setVideoMuted(true);
-      }
-    }
+    endCall();
   };
 
   return (
@@ -252,79 +153,42 @@ const StartClass = () => {
           <div>Loading next slot...</div>
         ) : error ? (
           <div style={{ color: 'red' }}>{error}</div>
-        ) : !nextSlot ? (
+        ) : upcomingSlots.length === 0 ? (
           <div style={{ color: '#888', fontSize: '1.1rem' }}>No upcoming slot found.</div>
         ) : (
-          <div className="slot-card" style={{ marginBottom: '2rem' }}>
-            {nextSlot.student && (
-              <div className="slot-student">Student: {nextSlot.student.studentName || nextSlot.student.name || nextSlot.student.username}</div>
-            )}
-            {nextSlot.course && nextSlot.course.courseName && (
-              <div className="slot-course">Course: {nextSlot.course.courseName}</div>
-            )}
-            <div className="slot-details">
-              {nextSlot.day && <span className="slot-day">{nextSlot.day}</span>}
-              {nextSlot.time && <span className="slot-time">{nextSlot.time}</span>}
-            </div>
-            <button
-              className="btn btn-primary"
-              style={{ marginTop: 20, padding: '0.7rem 2.2rem', fontSize: '1.1rem' }}
-              onClick={handleStartCall}
-              disabled={callStarted}
-            >
-              {callStarted ? 'Call Started' : 'Start Call'}
-            </button>
-          </div>
-        )}
-        {callStarted && (
-          <div className="video-call-container">
-            <div className="video-call-header">Video Call In Progress</div>
-            <div className="video-streams">
-              <div
-                ref={localVideoRef}
-                className={`video-box${audioMuted ? ' muted' : ''}`}
-              >
-                Local Video
-              </div>
-              <div ref={remoteVideoRef} className="video-box">
-                Remote Video
-              </div>
-            </div>
-            <div className="video-call-controls">
-              <button className="video-call-btn" onClick={handleToggleAudio}>
-                {audioMuted ? (
-                  <>
-                    <span role="img" aria-label="Unmute">&#128264;</span> Unmute
-                  </>
-                ) : (
-                  <>
-                    <span role="img" aria-label="Mute">&#128263;</span> Mute
-                  </>
+          <>
+            {upcomingSlots.map((slot, idx) => (
+              <div className="slot-card" style={{ marginBottom: '2rem' }} key={slot.slotId}>
+                {slot.student && (
+                  <div className="slot-student">Student: {slot.student.studentName || slot.student.name || slot.student.username}</div>
                 )}
-              </button>
-              <button
-                className="video-call-btn"
-                onClick={handleToggleVideo}
-                disabled={!videoTrackObj}
-              >
-                {videoMuted ? (
-                  <>
-                    <span role="img" aria-label="Show Video">&#128249;</span> Show Video
-                  </>
-                ) : (
-                  <>
-                    <span role="img" aria-label="Hide Video">&#128250;</span> Hide Video
-                  </>
+                {slot.course && slot.course.courseName && (
+                  <div className="slot-course">Course: {slot.course.courseName}</div>
                 )}
-              </button>
-              <button
-                className="video-call-btn danger"
-                onClick={handleEndCall}
-              >
-                <span role="img" aria-label="End">&#128682;</span> End Call
-              </button>
-            </div>
-          </div>
+                <div className="slot-details">
+                  {slot.day && <span className="slot-day">{slot.day}</span>}
+                  {slot.time && <span className="slot-time">{slot.time}</span>}
+                </div>
+                <button
+                  className="btn btn-primary"
+                  style={{ marginTop: 20, padding: '0.7rem 2.2rem', fontSize: '1.1rem' }}
+                  onClick={() => handleStartCall(slot)}
+                  disabled={callActive}
+                >
+                  {callActive ? 'Call Started' : 'Start Call'}
+                </button>
+                {callActive && (
+                  <button
+                    className="btn btn-secondary"
+                    style={{ marginLeft: 16 }}
+                    onClick={handleEndCall}
+                  >
+                    End Call
+                  </button>
+                )}
+              </div>
+            ))}
+          </>
         )}
       </div>
     </div>

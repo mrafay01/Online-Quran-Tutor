@@ -129,6 +129,29 @@ const Slots = () => {
   allSlots = allSlots.filter(slot => slot.isBooked === true || slot.isBooked === 'true');
   console.log('Filtered booked slots:', allSlots);
 
+  // For teachers, group slots by unique day+time+course combination to avoid duplicates
+  if (role === 'teacher') {
+    const groupedSlots = {};
+    allSlots.forEach(slot => {
+      const key = `${slot.day}-${slot.time}-${slot.course?.courseId || 'no-course'}`;
+      if (!groupedSlots[key]) {
+        groupedSlots[key] = {
+          ...slot,
+          students: []
+        };
+      }
+      // Add student to the students array if it exists
+      if (slot.student) {
+        const existingStudent = groupedSlots[key].students.find(s => s.username === slot.student.username);
+        if (!existingStudent) {
+          groupedSlots[key].students.push(slot.student);
+        }
+      }
+    });
+    allSlots = Object.values(groupedSlots);
+    console.log('Grouped slots for teacher:', allSlots);
+  }
+
   // Helper to convert a time range string (e.g., "09:00 - 10:00") from teacher's region to user's region
   function convertTimeRangeFromTeacherToUser(timeRange, teacherZone, userZone, teacherUsername) {
     if (!timeRange || !teacherZone || !userZone) return "";
@@ -162,29 +185,154 @@ const Slots = () => {
     }
   }
 
-  // Add converted time to each slot
+  // Helper to manually convert day based on timezone differences
+  function convertDayBasedOnTimezone(originalDay, originalTime, convertedTime, teacherZone, userZone) {
+    if (!originalDay || !originalTime || !convertedTime || !teacherZone || !userZone) {
+      return originalDay;
+    }
+
+    try {
+      // Get timezone offsets
+      const teacherOffset = DateTime.now().setZone(teacherZone).offset;
+      const userOffset = DateTime.now().setZone(userZone).offset;
+      const gmtDifference = userOffset - teacherOffset; // Positive if user is ahead
+
+      // Parse original and converted times
+      const [originalStart] = originalTime.split(" - ");
+      const [convertedStart] = convertedTime.split(" - ");
+      
+      const originalHour = parseInt(originalStart.split(":")[0], 10);
+      const convertedHour = parseInt(convertedStart.split(":")[0], 10);
+
+      console.log('--- Day Conversion Debug ---');
+      console.log('Original day:', originalDay);
+      console.log('Original time:', originalTime, '(hour:', originalHour, ')');
+      console.log('Converted time:', convertedTime, '(hour:', convertedHour, ')');
+      console.log('Teacher offset:', teacherOffset);
+      console.log('User offset:', userOffset);
+      console.log('GMT difference:', gmtDifference);
+
+      // Day conversion logic
+      let convertedDay = originalDay;
+      
+      if (gmtDifference > 0) { // User is ahead of teacher
+        if (convertedHour < originalHour) {
+          // Converted hours are less than original hours, should be next day
+          convertedDay = getNextDay(originalDay);
+          console.log('Moving to next day:', convertedDay);
+        } else if (convertedHour > originalHour) {
+          // Converted hours are higher than original hours, should be previous day
+          convertedDay = getPreviousDay(originalDay);
+          console.log('Moving to previous day:', convertedDay);
+        }
+      } else if (gmtDifference < 0) { // User is behind teacher
+        if (convertedHour < originalHour) {
+          // Converted hours are less than original hours, should be previous day
+          convertedDay = getPreviousDay(originalDay);
+          console.log('Moving to previous day:', convertedDay);
+        } else if (convertedHour > originalHour) {
+          // Converted hours are higher than original hours, should be next day
+          convertedDay = getNextDay(originalDay);
+          console.log('Moving to next day:', convertedDay);
+        }
+      }
+
+      console.log('Final converted day:', convertedDay);
+      return convertedDay;
+    } catch (e) {
+      console.log('Day conversion error:', e);
+      return originalDay;
+    }
+  }
+
+  // Helper to get next day
+  function getNextDay(currentDay) {
+    const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+    const currentIndex = days.indexOf(currentDay);
+    const nextIndex = (currentIndex + 1) % 7;
+    return days[nextIndex];
+  }
+
+  // Helper to get previous day
+  function getPreviousDay(currentDay) {
+    const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+    const currentIndex = days.indexOf(currentDay);
+    const previousIndex = (currentIndex - 1 + 7) % 7;
+    return days[previousIndex];
+  }
+
+  // Add converted time and day to each slot
   allSlots = allSlots.map(slot => {
     if (slot.time && /^\d{2}:\d{2}\s*-\s*\d{2}:\d{2}$/.test(slot.time) && slot.teacher && slot.teacher.region) {
       slot.localTime = convertTimeRangeFromTeacherToUser(slot.time, slot.teacher.region, userRegion, slot.teacher.username);
+      // Apply manual day conversion based on timezone differences
+      slot.localDay = convertDayBasedOnTimezone(slot.day, slot.time, slot.localTime, slot.teacher.region, userRegion);
     } else {
       slot.localTime = slot.time;
+      slot.localDay = slot.day;
     }
     return slot;
   });
 
   // Sort by next upcoming date (day + time)
   allSlots.sort((a, b) => {
-    // Get next date for each slot's day
-    const nextA = getNextDateOfWeek(a.day);
-    const nextB = getNextDateOfWeek(b.day);
+    // Get next date for each slot's converted day
+    const nextA = getNextDateOfWeek(a.localDay || a.day);
+    const nextB = getNextDateOfWeek(b.localDay || b.day);
     // Add time to the date
-    if (a.time && b.time) {
-      const [aHour, aMin] = a.time.split('-')[0].trim().split(':');
-      const [bHour, bMin] = b.time.split('-')[0].trim().split(':');
+    if (a.localTime && b.localTime) {
+      const [aHour, aMin] = a.localTime.split('-')[0].trim().split(':');
+      const [bHour, bMin] = b.localTime.split('-')[0].trim().split(':');
       nextA.setHours(parseInt(aHour, 10), parseInt(aMin, 10) || 0, 0, 0);
       nextB.setHours(parseInt(bHour, 10), parseInt(bMin, 10) || 0, 0, 0);
     }
     return nextA - nextB;
+  });
+
+  // Build a robust slot lookup: { [studentDay]: { [studentTime]: slotObj } }
+  const fullToShortDay = {
+    Monday: "Mon",
+    Tuesday: "Tue",
+    Wednesday: "Wed",
+    Thursday: "Thu",
+    Friday: "Fri",
+    Saturday: "Sat",
+    Sunday: "Sun",
+  };
+  const shortToFullDay = {
+    Mon: "Monday",
+    Tue: "Tuesday",
+    Wed: "Wednesday",
+    Thu: "Thursday",
+    Fri: "Friday",
+    Sat: "Saturday",
+    Sun: "Sunday"
+  };
+  // Determine teacherZone for each slot (for student/parent), or userRegion for teacher
+  function getSlotZone(slot) {
+    if (role === 'teacher') return userRegion || 'UTC';
+    if (slot.teacher && slot.teacher.region) return slot.teacher.region;
+    return 'UTC';
+  }
+  // Build lookup
+  const slotLookup = {};
+  allSlots.forEach(slot => {
+    if (!slot.time || !slot.day) return;
+    const teacherZone = getSlotZone(slot);
+    const teacherDayFull = slot.day;
+    const teacherDayIndex = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"].indexOf(teacherDayFull);
+    if (teacherDayIndex === -1) return;
+    const refMonday = DateTime.utc(2023, 1, 2); // 2023-01-02 is a Monday
+    const teacherDate = refMonday.plus({ days: teacherDayIndex });
+    const [start] = slot.time.split(" - ");
+    const [h, m] = start.split(":").map(Number);
+    const teacherDT = teacherDate.set({ hour: h, minute: m, second: 0, millisecond: 0 }).setZone(teacherZone, { keepLocalTime: true });
+    const studentDT = teacherDT.setZone(userRegion);
+    const studentDayFull = studentDT.setLocale('en').toFormat('cccc');
+    const studentDay = studentDayFull;
+    const studentTime = `${studentDT.toFormat("HH:mm")} - ${studentDT.plus({ minutes: 60 }).toFormat("HH:mm")}`;
+    if (!slotLookup[studentDay]) slotLookup[studentDay] = {};
+    slotLookup[studentDay][studentTime] = slot;
   });
 
   return (
@@ -204,7 +352,7 @@ const Slots = () => {
             <div className="slots-empty">No slots scheduled.</div>
           ) : (
             allSlots.map((slot, idx) => {
-              const nextDate = getNextDateOfWeek(slot.day);
+              const nextDate = getNextDateOfWeek(slot.localDay || slot.day);
               const dateStr = nextDate.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
               return (
                 <div key={slot.slotId + '-' + idx} className="slot-card">
@@ -219,14 +367,24 @@ const Slots = () => {
                   {role === "student" && slot.teacher && (slot.teacher.teacherName || slot.teacher.name || slot.teacher.username) && (
                     <div className="slot-teacher">Teacher: {slot.teacher.teacherName || slot.teacher.name || slot.teacher.username}</div>
                   )}
-                  {role === "teacher" && slot.student && (slot.student.name || slot.student.username) && (
+                  {role === "teacher" && slot.students && slot.students.length > 0 && (
+                    <div className="slot-students">
+                      Students: {slot.students.map((student, idx) => (
+                        <span key={student.username}>
+                          {student.name || student.username}
+                          {idx < slot.students.length - 1 ? ', ' : ''}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  {role === "teacher" && (!slot.students || slot.students.length === 0) && slot.student && (slot.student.name || slot.student.username) && (
                     <div className="slot-student">Student: {slot.student.name || slot.student.username}</div>
                   )}
                   {slot.course && slot.course.courseName && (
                     <div className="slot-course">Course: {slot.course.courseName}</div>
                   )}
                   <div className="slot-details">
-                    <span className="slot-day">{slot.day}</span>
+                    <span className="slot-day">{slot.localDay || slot.day}</span>
                     <span className="slot-time">{slot.localTime}</span>
                     <span className="slot-next">Next: {dateStr}</span>
                   </div>

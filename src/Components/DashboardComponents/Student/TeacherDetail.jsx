@@ -170,6 +170,82 @@ const TeacherDetail = () => {
     }
   }
 
+  // Helper to manually convert day based on timezone differences
+  function convertDayBasedOnTimezone(originalDay, originalTime, convertedTime, fromZone, toZone) {
+    if (!originalDay || !originalTime || !convertedTime || !fromZone || !toZone) {
+      return originalDay;
+    }
+
+    try {
+      // Get timezone offsets
+      const fromOffset = DateTime.now().setZone(fromZone).offset;
+      const toOffset = DateTime.now().setZone(toZone).offset;
+      const gmtDifference = toOffset - fromOffset; // Positive if toZone is ahead
+
+      // Parse original and converted times
+      const [originalStart] = originalTime.split(" - ");
+      const [convertedStart] = convertedTime.split(" - ");
+      
+      const originalHour = parseInt(originalStart.split(":")[0], 10);
+      const convertedHour = parseInt(convertedStart.split(":")[0], 10);
+
+      console.log('--- Day Conversion Debug ---');
+      console.log('Original day:', originalDay);
+      console.log('Original time:', originalTime, '(hour:', originalHour, ')');
+      console.log('Converted time:', convertedTime, '(hour:', convertedHour, ')');
+      console.log('From offset:', fromOffset);
+      console.log('To offset:', toOffset);
+      console.log('GMT difference:', gmtDifference);
+
+      // Day conversion logic
+      let convertedDay = originalDay;
+      
+      if (gmtDifference > 0) { // ToZone is ahead of fromZone
+        if (convertedHour < originalHour) {
+          // Converted hours are less than original hours, should be next day
+          convertedDay = getNextDay(originalDay);
+          console.log('Moving to next day:', convertedDay);
+        } else if (convertedHour > originalHour) {
+          // Converted hours are higher than original hours, should be previous day
+          convertedDay = getPreviousDay(originalDay);
+          console.log('Moving to previous day:', convertedDay);
+        }
+      } else if (gmtDifference < 0) { // ToZone is behind fromZone
+        if (convertedHour < originalHour) {
+          // Converted hours are less than original hours, should be previous day
+          convertedDay = getPreviousDay(originalDay);
+          console.log('Moving to previous day:', convertedDay);
+        } else if (convertedHour > originalHour) {
+          // Converted hours are higher than original hours, should be next day
+          convertedDay = getNextDay(originalDay);
+          console.log('Moving to next day:', convertedDay);
+        }
+      }
+
+      console.log('Final converted day:', convertedDay);
+      return convertedDay;
+    } catch (e) {
+      console.log('Day conversion error:', e);
+      return originalDay;
+    }
+  }
+
+  // Helper to get next day
+  function getNextDay(currentDay) {
+    const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+    const currentIndex = days.indexOf(currentDay);
+    const nextIndex = (currentIndex + 1) % 7;
+    return days[nextIndex];
+  }
+
+  // Helper to get previous day
+  function getPreviousDay(currentDay) {
+    const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+    const currentIndex = days.indexOf(currentDay);
+    const previousIndex = (currentIndex - 1 + 7) % 7;
+    return days[previousIndex];
+  }
+
   // Normalize time strings (remove spaces, ensure HH:mm - HH:mm format)
   function normalizeTimeRange(timeRange) {
     if (!timeRange) return "";
@@ -193,6 +269,33 @@ const TeacherDetail = () => {
       const bStart = b.split(" - ")[0];
       return DateTime.fromFormat(aStart, "HH:mm").toMillis() - DateTime.fromFormat(bStart, "HH:mm").toMillis();
     });
+
+  // Build a robust slot lookup: { [studentDayShort]: { [studentTime]: slotObj } }
+  const slotLookup = {};
+  schedule.forEach(slot => {
+    if (!slot.time || !slot.day) return;
+    // Get teacher's day index (0=Monday, 6=Sunday)
+    const teacherDayFull = slot.day;
+    const teacherDayIndex = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"].indexOf(teacherDayFull);
+    if (teacherDayIndex === -1) return;
+    // Use an arbitrary reference week starting on Monday
+    const refMonday = DateTime.utc(2023, 1, 2); // 2023-01-02 is a Monday
+    const teacherDate = refMonday.plus({ days: teacherDayIndex });
+    // Parse start time
+    const [start] = normalizeTimeRange(slot.time).split(" - ");
+    const [h, m] = start.split(":").map(Number);
+    // Build teacher's DateTime in their timezone
+    const teacherDT = teacherDate.set({ hour: h, minute: m, second: 0, millisecond: 0 }).setZone(teacherZone, { keepLocalTime: true });
+    // Convert to student's timezone
+    const studentDT = teacherDT.setZone(studentRegion);
+    // Get student's local day and time
+    const studentDayFull = studentDT.setLocale('en').toFormat('cccc'); // e.g., "Monday"
+    const studentDayShort = fullToShortDay[studentDayFull];
+    const studentTime = `${studentDT.toFormat("HH:mm")} - ${studentDT.plus({ minutes: 60 }).toFormat("HH:mm")}`;
+    if (!studentDayShort) return;
+    if (!slotLookup[studentDayShort]) slotLookup[studentDayShort] = {};
+    slotLookup[studentDayShort][studentTime] = slot;
+  });
 
   return (
     <div className="dashboard-container">
@@ -322,12 +425,17 @@ const TeacherDetail = () => {
                 </div>
                 {allTimesRaw.map((originalTime) => {
                   // Convert the original time to student region for display
-                  const convertedTime = convertTimeRange(originalTime, teacherZone, studentRegion);
+                  // Use Monday as reference, as allTimesRaw is sorted by time only
+                  const refMonday = DateTime.utc(2023, 1, 2);
+                  const [h, m] = normalizeTimeRange(originalTime).split(" - ")[0].split(":").map(Number);
+                  const teacherDT = refMonday.set({ hour: h, minute: m, second: 0, millisecond: 0 }).setZone(teacherZone, { keepLocalTime: true });
+                  const studentDT = teacherDT.setZone(studentRegion);
+                  const studentTime = `${studentDT.toFormat("HH:mm")} - ${studentDT.plus({ minutes: 60 }).toFormat("HH:mm")}`;
                   return (
                     <div className="schedule-row" key={originalTime}>
-                      <div className="schedule-cell schedule-time">{convertedTime}</div>
+                      <div className="schedule-cell schedule-time">{studentTime}</div>
                       {days.map(dayShort => {
-                        const slotObj = (slotsByDay[dayShort] || []).find(slot => normalizeTimeRange(slot.time) === originalTime);
+                        const slotObj = slotLookup[dayShort]?.[studentTime];
                         const isSelected = slotObj && selectedSlots.includes(slotObj.slotId);
                         const isDisabled = slotObj && slotObj.isBooked === true;
                         return (

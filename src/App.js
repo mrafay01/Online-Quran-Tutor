@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, useParams } from 'react-router-dom';
 import './App.css';
+import { VideoCallProvider } from './Components/DashboardComponents/shared/VideoCallProvider';
 
 import HomePage from "./Pages/home";
 import LoginSignup from './Pages/loginsignup';
@@ -39,6 +40,7 @@ import JoinClass from './Components/DashboardComponents/Student/JoinClass';
 import QuranbyLessons from './Components/DashboardComponents/shared/QuranbyLessons';
 import LessonProgressbyStudents from './Components/DashboardComponents/Teacher/LessonProgressbyStudents';
 import ChildrenProgressDetail from './Components/DashboardComponents/Parent/ChildernProgressDetail';
+import MonitorClass from './Components/DashboardComponents/Parent/MonitorClass';
 
 
 function DashboardRouter() {
@@ -51,50 +53,53 @@ function DashboardRouter() {
 
 function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route index element={<HomePage />}/>
-        <Route path='/home' element={<HomePage/>}/>
-        <Route path='/loginsignup' element={<LoginSignup/>}/>
-        <Route path='/courses' element={<Courses/>}/>
-        <Route path='/teachers' element={<Teachers/>}/>
-        <Route path='/about-us' element={<AboutUs/>}/> 
-        <Route path='/contact-us' element={<ContactUs/>}/>
-        <Route path='/schedule' element={<Schedule/>}/>
-        <Route path="/teacher-extra" element={<TeacherExtra />} />
-        <Route path='/:role/:username/profile' element={<Profile/>}/>
-        <Route path='/:role/:username/dashboard' element={<DashboardRouter />} />
-        <Route path='/:role/:username/my-courses' element={<MyCoursesPage/>}/>
-        <Route path='/:role/:username/setting' element={<Setting/>}/>
-        <Route path='/:role/:username/schedule' element={<SchedulePage/>}/>
-        <Route path='/:role/:username/notifications' element={<NotificationsPage/>}/>
-        <Route path=':role/:username/dashboard' element={<ParentDashboard />} />
-        <Route path=':role/:username/my-children' element={<MyChildren />} />
-        <Route path=':role/:username/payments' element={<ParentPayments />} />
-        <Route path=':role/:username/children-progress' element={<ChildrenProgress />} />
-        <Route path='student/:username/dashboard' element={<StudentDashboard />} />
-        <Route path='student/:username/courses' element={<StudentCourses />} />
-        <Route path=':role/:username/progress' element={<StudentProgress />} />
-        <Route path=':role/:username/progress/:courseId' element={<CourseProgressDetail />} />
-        <Route path='teacher/:username/dashboard' element={<TeacherDashboard />} />
-        <Route path='teacher/:username/request-incharge' element={<RequestIncharge />} />
-        <Route path='teacher/:username/review-requests' element={<ReviewRequests />} />
-        <Route path=':role/:username/my-students' element={<MyStudents />} />
-        <Route path=':role/:username/courses' element={<TeacherCourses />} />
-        <Route path='teacher/:username/earnings' element={<TeacherEarnings />} />
-        <Route path="/student/:student_username/enroll-teacher" element={<EnrollTeacher />} />
-        <Route path="/student/:student_username/teacher/:teacher_username" element={<TeacherDetail />} />
-        <Route path='/:role/:username/slots' element={<Slots/>}/>
-        <Route path='teacher/:username/schedule' element={<TeacherSchedule />} />
-        <Route path='student/:username/schedule' element={<StudentSchedule />} />
-        <Route path='parent/:username/schedule' element={<ParentSchedule />} />
-        <Route path=':role/:username/start-class' element={<StartClass />}/>
-        <Route path=':role/:username/join-class' element={<JoinClass />}/>
-        <Route path=':role/:username/quran-lesson' element={<QuranbyLessons />}/>
-        <Route path=':role/:username/lesson-progress' element={<LessonProgressbyStudents />}/>
-        <Route path=':role/:username/children-progress-detail' element={<ChildrenProgressDetail />}/>
-      </Routes>
-    </BrowserRouter>
+    <VideoCallProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route index element={<HomePage />}/>
+          <Route path='/home' element={<HomePage/>}/>
+          <Route path='/loginsignup' element={<LoginSignup/>}/>
+          <Route path='/courses' element={<Courses/>}/>
+          <Route path='/teachers' element={<Teachers/>}/>
+          <Route path='/about-us' element={<AboutUs/>}/> 
+          <Route path='/contact-us' element={<ContactUs/>}/>
+          <Route path='/schedule' element={<Schedule/>}/>
+          <Route path="/teacher-extra" element={<TeacherExtra />} />
+          <Route path='/:role/:username/profile' element={<Profile/>}/>
+          <Route path='/:role/:username/dashboard' element={<DashboardRouter />} />
+          <Route path='/:role/:username/my-courses' element={<MyCoursesPage/>}/>
+          <Route path='/:role/:username/setting' element={<Setting/>}/>
+          <Route path='/:role/:username/schedule' element={<SchedulePage/>}/>
+          <Route path='/:role/:username/notifications' element={<NotificationsPage/>}/>
+          <Route path=':role/:username/dashboard' element={<ParentDashboard />} />
+          <Route path=':role/:username/my-children' element={<MyChildren />} />
+          <Route path=':role/:username/payments' element={<ParentPayments />} />
+          <Route path=':role/:username/children-progress' element={<ChildrenProgress />} />
+          <Route path='student/:username/dashboard' element={<StudentDashboard />} />
+          <Route path='student/:username/courses' element={<StudentCourses />} />
+          <Route path=':role/:username/progress' element={<StudentProgress />} />
+          <Route path=':role/:username/progress/:courseId' element={<CourseProgressDetail />} />
+          <Route path='teacher/:username/dashboard' element={<TeacherDashboard />} />
+          <Route path='teacher/:username/request-incharge' element={<RequestIncharge />} />
+          <Route path='teacher/:username/review-requests' element={<ReviewRequests />} />
+          <Route path=':role/:username/my-students' element={<MyStudents />} />
+          <Route path=':role/:username/courses' element={<TeacherCourses />} />
+          <Route path='teacher/:username/earnings' element={<TeacherEarnings />} />
+          <Route path="/student/:student_username/enroll-teacher" element={<EnrollTeacher />} />
+          <Route path="/student/:student_username/teacher/:teacher_username" element={<TeacherDetail />} />
+          <Route path='/:role/:username/slots' element={<Slots/>}/>
+          <Route path='teacher/:username/schedule' element={<TeacherSchedule />} />
+          <Route path='student/:username/schedule' element={<StudentSchedule />} />
+          <Route path='parent/:username/schedule' element={<ParentSchedule />} />
+          <Route path=':role/:username/start-class' element={<StartClass />}/>
+          <Route path=':role/:username/join-class' element={<JoinClass />}/>
+          <Route path=':role/:username/quran-lesson' element={<QuranbyLessons />}/>
+          <Route path=':role/:username/lesson-progress' element={<LessonProgressbyStudents />}/>
+          <Route path=':role/:username/children-progress-detail' element={<ChildrenProgressDetail />}/>
+          <Route path='/parent/:username/monitor-class' element={<MonitorClass />} />
+        </Routes>
+      </BrowserRouter>
+    </VideoCallProvider>
   );
 }
 

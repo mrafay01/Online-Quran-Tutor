@@ -85,6 +85,82 @@ const RequestIncharge = () => {
     }
   }
 
+  // Helper to manually convert day based on timezone differences
+  function convertDayBasedOnTimezone(originalDay, originalTime, convertedTime, fromZone, toZone) {
+    if (!originalDay || !originalTime || !convertedTime || !fromZone || !toZone) {
+      return originalDay;
+    }
+
+    try {
+      // Get timezone offsets
+      const fromOffset = DateTime.now().setZone(fromZone).offset;
+      const toOffset = DateTime.now().setZone(toZone).offset;
+      const gmtDifference = toOffset - fromOffset; // Positive if toZone is ahead
+
+      // Parse original and converted times
+      const [originalStart] = originalTime.split(" - ");
+      const [convertedStart] = convertedTime.split(" - ");
+      
+      const originalHour = parseInt(originalStart.split(":")[0], 10);
+      const convertedHour = parseInt(convertedStart.split(":")[0], 10);
+
+      console.log('--- Day Conversion Debug ---');
+      console.log('Original day:', originalDay);
+      console.log('Original time:', originalTime, '(hour:', originalHour, ')');
+      console.log('Converted time:', convertedTime, '(hour:', convertedHour, ')');
+      console.log('From offset:', fromOffset);
+      console.log('To offset:', toOffset);
+      console.log('GMT difference:', gmtDifference);
+
+      // Day conversion logic
+      let convertedDay = originalDay;
+      
+      if (gmtDifference > 0) { // ToZone is ahead of fromZone
+        if (convertedHour < originalHour) {
+          // Converted hours are less than original hours, should be next day
+          convertedDay = getNextDay(originalDay);
+          console.log('Moving to next day:', convertedDay);
+        } else if (convertedHour > originalHour) {
+          // Converted hours are higher than original hours, should be previous day
+          convertedDay = getPreviousDay(originalDay);
+          console.log('Moving to previous day:', convertedDay);
+        }
+      } else if (gmtDifference < 0) { // ToZone is behind fromZone
+        if (convertedHour < originalHour) {
+          // Converted hours are less than original hours, should be previous day
+          convertedDay = getPreviousDay(originalDay);
+          console.log('Moving to previous day:', convertedDay);
+        } else if (convertedHour > originalHour) {
+          // Converted hours are higher than original hours, should be next day
+          convertedDay = getNextDay(originalDay);
+          console.log('Moving to next day:', convertedDay);
+        }
+      }
+
+      console.log('Final converted day:', convertedDay);
+      return convertedDay;
+    } catch (e) {
+      console.log('Day conversion error:', e);
+      return originalDay;
+    }
+  }
+
+  // Helper to get next day
+  function getNextDay(currentDay) {
+    const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+    const currentIndex = days.indexOf(currentDay);
+    const nextIndex = (currentIndex + 1) % 7;
+    return days[nextIndex];
+  }
+
+  // Helper to get previous day
+  function getPreviousDay(currentDay) {
+    const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+    const currentIndex = days.indexOf(currentDay);
+    const previousIndex = (currentIndex - 1 + 7) % 7;
+    return days[previousIndex];
+  }
+
   const handleSlotChange = (slotId) => {
     setSelectedSlots((prev) =>
       prev.includes(slotId)
@@ -114,15 +190,27 @@ const RequestIncharge = () => {
     const canTeachAll = selectedCourses.every(course => canTeach.includes(course));
     // For each selected slot, check if teacher is available for a slot that, when converted to userRegion, matches the selected slot's day and time
     const teacherRegion = teacherRegions[teacher.username] || 'UTC';
-    const availableAll = selectedDayTimes.every(selSlot =>
-      available.some(avail => {
-        // Convert teacher's available slot time to userRegion
+    const availableAll = selectedDayTimes.every(selSlot => {
+      // Build DateTime for selected slot in user's region
+      const selDayIndex = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"].indexOf(selSlot.day);
+      if (selDayIndex === -1) return false;
+      const refMonday = DateTime.utc(2023, 1, 2);
+      const selDate = refMonday.plus({ days: selDayIndex });
+      const [selH, selM] = selSlot.time.split(":").map(Number);
+      const userDT = selDate.set({ hour: selH, minute: selM, second: 0, millisecond: 0 }).setZone(userRegion, { keepLocalTime: true });
+      // For each teacher available slot, convert to user's region and compare
+      return available.some(avail => {
         if (!avail.time || !avail.day) return false;
-        const convertedTime = convertTimeRangeBetweenRegions(avail.time, teacherRegion, userRegion);
-        // Compare both day and time
-        return avail.day === selSlot.day && convertedTime === selSlot.time;
-      })
-    );
+        const availDayIndex = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"].indexOf(avail.day);
+        if (availDayIndex === -1) return false;
+        const availDate = refMonday.plus({ days: availDayIndex });
+        const [availH, availM] = avail.time.split(":").map(Number);
+        const teacherDT = availDate.set({ hour: availH, minute: availM, second: 0, millisecond: 0 }).setZone(teacherRegion, { keepLocalTime: true });
+        const userAvailDT = teacherDT.setZone(userRegion);
+        // Compare day and time
+        return userAvailDT.weekday === userDT.weekday && userAvailDT.toFormat("HH:mm") === userDT.toFormat("HH:mm");
+      });
+    });
     // Exclude self
     const notSelf = teacher.username !== username && teacher.name !== username;
     return canTeachAll && availableAll && notSelf;

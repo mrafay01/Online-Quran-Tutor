@@ -96,6 +96,7 @@ const Sidebar = ({
           { id: "children-progress", label: "Children Progress", icon: BarChart2, path: `/parent/${username}/children-progress` },
           { id: "schedule", label: "Schedule", icon: Calendar, path: `/parent/${username}/schedule` },
           { id: "slots", label: "Slots", icon: Clock, path: `/parent/${username}/slots` },
+          { id: "monitor-class", label: "Monitor Class", icon: Phone, path: `/parent/${username}/monitor-class` },
           { id: "profile", label: "Profile", icon: User, path: `/parent/${username}/profile` },
         ];
 

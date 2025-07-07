@@ -4,6 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { DateTime } from 'luxon';
 import AgoraRTC from 'agora-rtc-sdk-ng';
 import '../dashboard.css';
+import { useVideoCall } from '../shared/VideoCallProvider';
 
 const AGORA_APP_ID = "cd14423fdd0849a8a685e966616d0756"; // <-- Replace with your Agora App ID
 
@@ -14,23 +15,13 @@ const JoinClass = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [callAvailable, setCallAvailable] = useState(false);
-  const [callStarted, setCallStarted] = useState(false);
-  const [agoraClient, setAgoraClient] = useState(null);
-  const [joined, setJoined] = useState(false);
-  const localVideoRef = useRef(null);
-  const remoteVideoRef = useRef(null);
+  const { callActive, startCall, endCall } = useVideoCall();
   const [sessionId, setSessionId] = useState(null);
-  const [audioMuted, setAudioMuted] = useState(false);
-  const [videoMuted, setVideoMuted] = useState(false);
-  const [audioTrackObj, setAudioTrackObj] = useState(null);
-  const [videoTrackObj, setVideoTrackObj] = useState(null);
 
   const token = null; // Use a real token for production
 
   // Poll for next slot and call status
   useEffect(() => {
-    if (callStarted) return; // Don't poll if call is ongoing
-
     let interval;
     const fetchNextSlot = async () => {
       setLoading(true);
@@ -82,117 +73,7 @@ const JoinClass = () => {
     fetchNextSlot();
     interval = setInterval(fetchNextSlot, 5000);
     return () => clearInterval(interval);
-  }, [username, callStarted]);
-
-  // Agora logic
-  useEffect(() => {
-    if (!callStarted) return;
-    let client = null;
-    let audioTrack = null;
-    let videoTrack = null;
-
-    const startAgora = async () => {
-      try {
-        client = AgoraRTC.createClient({ mode: 'rtc', codec: 'vp8' });
-        setAgoraClient(client);
-
-        // Join channel
-        const channel = nextSlot ? `class_${nextSlot.slotId}` : 'default_channel';
-        await client.join(AGORA_APP_ID, channel, token || null, username);
-
-        // Try to get both audio and video
-        try {
-          [audioTrack, videoTrack] = await AgoraRTC.createMicrophoneAndCameraTracks();
-        } catch (err) {
-          // Try audio only if video fails
-          try {
-            audioTrack = await AgoraRTC.createMicrophoneAudioTrack();
-            // Optionally, show a message: "No camera detected, joining with audio only."
-          } catch (audioErr) {
-            setError("No microphone or camera detected.");
-            return;
-          }
-        }
-
-        setAudioTrackObj(audioTrack);
-        setVideoTrackObj(videoTrack);
-
-        // Play local video if available
-        if (localVideoRef.current && videoTrack) {
-          videoTrack.play(localVideoRef.current);
-        }
-
-        // Publish tracks
-        if (audioTrack && videoTrack) {
-          await client.publish([audioTrack, videoTrack]);
-        } else if (audioTrack) {
-          await client.publish([audioTrack]);
-        }
-
-        setJoined(true);
-
-        // Subscribe to remote user
-        client.on('user-published', async (user, mediaType) => {
-          await client.subscribe(user, mediaType);
-          if (mediaType === 'video' && remoteVideoRef.current) {
-            user.videoTrack.play(remoteVideoRef.current);
-          }
-          if (mediaType === 'audio') {
-            user.audioTrack.play();
-          }
-        });
-
-        // Cleanup on leave
-        client.on('user-unpublished', (user, mediaType) => {
-          if (mediaType === 'video' && remoteVideoRef.current) {
-            remoteVideoRef.current.innerHTML = '';
-          }
-        });
-      } catch (err) {
-        setError("No microphone or camera detected.");
-        return;
-      }
-    };
-
-    startAgora();
-
-    return () => {
-      if (client) {
-        client.leave();
-      }
-      if (audioTrack) audioTrack.close();
-      if (videoTrack) videoTrack.close();
-      setAudioTrackObj(null);
-      setVideoTrackObj(null);
-      setJoined(false);
-    };
-    // eslint-disable-next-line
-  }, [callStarted]);
-
-  // Mute/unmute handlers
-  const handleToggleAudio = async () => {
-    if (audioTrackObj) {
-      if (audioMuted) {
-        await audioTrackObj.setEnabled(true);
-        setAudioMuted(false);
-      } else {
-        await audioTrackObj.setEnabled(false);
-        setAudioMuted(true);
-      }
-    }
-  };
-
-  const handleToggleVideo = async () => {
-    if (videoTrackObj) {
-      if (videoMuted) {
-        await videoTrackObj.setEnabled(true);
-        setVideoMuted(false);
-      } else {
-        await videoTrackObj.setEnabled(false);
-        setVideoMuted(true);
-      }
-    }
-  };
+  }, [username]);
 
   // Add this function to handle auto-open after call started
   const autoOpenQuranLesson = async () => {
@@ -256,74 +137,29 @@ const JoinClass = () => {
               className="btn btn-primary"
               style={{ marginTop: 20, padding: '0.7rem 2.2rem', fontSize: '1.1rem' }}
               onClick={async () => {
-                setCallStarted(true);
+                await startCall({
+                  channel: `class_${nextSlot.slotId}`,
+                  username,
+                  token: null,
+                  role: 'student',
+                  slotId: nextSlot.slotId,
+                  sessionId: sessionId,
+                });
                 await autoOpenQuranLesson();
               }}
-              disabled={callStarted}
+              disabled={callActive}
             >
-              {callStarted ? 'Call Started' : 'Join Call'}
+              {callActive ? 'Call Started' : 'Join Call'}
             </button>
-          </div>
-        )}
-        {callStarted && (
-          <div className="video-call-container">
-            <div className="video-call-header">Video Call In Progress</div>
-            <div className="video-streams">
-              <div
-                ref={localVideoRef}
-                className={`video-box${audioMuted ? ' muted' : ''}`}
-              >
-                Local Video
-              </div>
-              <div ref={remoteVideoRef} className="video-box">
-                Remote Video
-              </div>
-            </div>
-            <div className="video-call-controls">
-              <button className="video-call-btn" onClick={handleToggleAudio}>
-                {audioMuted ? (
-                  <>
-                    <span role="img" aria-label="Unmute">&#128264;</span> Unmute
-                  </>
-                ) : (
-                  <>
-                    <span role="img" aria-label="Mute">&#128263;</span> Mute
-                  </>
-                )}
-              </button>
+            {callActive && (
               <button
-                className="video-call-btn"
-                onClick={handleToggleVideo}
-                disabled={!videoTrackObj}
+                className="btn btn-secondary"
+                style={{ marginLeft: 16 }}
+                onClick={endCall}
               >
-                {videoMuted ? (
-                  <>
-                    <span role="img" aria-label="Show Video">&#128249;</span> Show Video
-                  </>
-                ) : (
-                  <>
-                    <span role="img" aria-label="Hide Video">&#128250;</span> Hide Video
-                  </>
-                )}
+                End Call
               </button>
-              <button
-                className="video-call-btn danger"
-                onClick={async () => {
-                  if (agoraClient) agoraClient.leave();
-                  if (sessionId) {
-                    await fetch('http://localhost:5000/api/video-call/end', {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({ sessionId })
-                    });
-                  }
-                  setCallStarted(false);
-                  setJoined(false);
-                }}
-              >
-                <span role="img" aria-label="End">&#128682;</span> End Call
-              </button>
-            </div>
+            )}
           </div>
         )}
       </div>
