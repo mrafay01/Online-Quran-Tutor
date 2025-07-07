@@ -191,25 +191,38 @@ function VideoCallBox() {
       try {
         client = AgoraRTC.createClient({ mode: 'rtc', codec: 'vp8' });
         setAgoraClient(client);
+        // Set up listeners BEFORE join
+        client.on('user-published', async (user, mediaType) => {
+          await client.subscribe(user, mediaType);
+          if (mediaType === 'video' && remoteVideoRef.current) {
+            user.videoTrack.play(remoteVideoRef.current);
+          }
+          if (mediaType === 'audio') {
+            user.audioTrack.play();
+          }
+        });
+        client.on('user-unpublished', (user, mediaType) => {
+          if (mediaType === 'video' && remoteVideoRef.current) {
+            remoteVideoRef.current.innerHTML = '';
+          }
+        });
         await client.join(AGORA_APP_ID, callInfo.channel, callInfo.token || null, callInfo.username);
-        // For parent role, do not create or publish local tracks
-        if (callInfo.role === 'parent') {
-          // Only subscribe to remote streams, do not publish
-          setJoined(true);
-          client.on('user-published', async (user, mediaType) => {
-            await client.subscribe(user, mediaType);
-            if (mediaType === 'video' && remoteVideoRef.current) {
+        // Subscribe to already-published remote users (important if student joins after teacher)
+        client.remoteUsers.forEach(async (user) => {
+          if (user.hasVideo) {
+            await client.subscribe(user, 'video');
+            if (remoteVideoRef.current) {
               user.videoTrack.play(remoteVideoRef.current);
             }
-            if (mediaType === 'audio') {
-              user.audioTrack.play();
-            }
-          });
-          client.on('user-unpublished', (user, mediaType) => {
-            if (mediaType === 'video' && remoteVideoRef.current) {
-              remoteVideoRef.current.innerHTML = '';
-            }
-          });
+          }
+          if (user.hasAudio) {
+            await client.subscribe(user, 'audio');
+            user.audioTrack.play();
+          }
+        });
+        // For parent role, do not create or publish local tracks
+        if (callInfo.role === 'parent') {
+          setJoined(true);
           return;
         }
         try {
@@ -232,20 +245,6 @@ function VideoCallBox() {
           await client.publish([_audioTrack]);
         }
         setJoined(true);
-        client.on('user-published', async (user, mediaType) => {
-          await client.subscribe(user, mediaType);
-          if (mediaType === 'video' && remoteVideoRef.current) {
-            user.videoTrack.play(remoteVideoRef.current);
-          }
-          if (mediaType === 'audio') {
-            user.audioTrack.play();
-          }
-        });
-        client.on('user-unpublished', (user, mediaType) => {
-          if (mediaType === 'video' && remoteVideoRef.current) {
-            remoteVideoRef.current.innerHTML = '';
-          }
-        });
       } catch (err) {
         return;
       }
@@ -290,8 +289,10 @@ function VideoCallBox() {
     <div className="video-call-container-global"> {/* Style this in CSS for bottom-right, non-fixed positioning */}
       <div className="video-call-header">Video Call In Progress</div>
       <div className="video-streams">
-        <div ref={localVideoRef} className={`video-box${audioMuted ? ' muted' : ''}`}>Local Video</div>
-        <div ref={remoteVideoRef} className="video-box">Remote Video</div>
+        {callInfo.role !== 'parent' && (
+          <div ref={localVideoRef} className={`video-box${audioMuted ? ' muted' : ''}`}><p className='video-box-label'>Local Video</p></div>
+        )}
+        <div ref={remoteVideoRef} className="video-box"><p className='video-box-label'>Remote Video</p></div>
       </div>
       <div className="video-call-controls">
         <button className="video-call-btn" onClick={handleToggleAudio}>
@@ -311,12 +312,12 @@ function VideoCallBox() {
           {videoMuted ? (
             <>
               <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" style={{marginRight: 6}}><rect x="3" y="6" width="14" height="8" rx="2" stroke="#2d3748" strokeWidth="2"/><path d="M17 8L19 6V14L17 12" stroke="#e53e3e" strokeWidth="2" strokeLinecap="round"/></svg>
-              Hide Video
+              Show Video
             </>
           ) : (
             <>
               <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" style={{marginRight: 6}}><rect x="3" y="6" width="14" height="8" rx="2" stroke="#2d3748" strokeWidth="2"/><path d="M17 8L19 6V14L17 12" stroke="#38d39f" strokeWidth="2" strokeLinecap="round"/></svg>
-              Show Video
+              Hide Video
             </>
           )}
         </button>

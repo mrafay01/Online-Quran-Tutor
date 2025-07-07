@@ -11,19 +11,19 @@ const AGORA_APP_ID = "cd14423fdd0849a8a685e966616d0756"; // <-- Replace with you
 const JoinClass = () => {
   const { username } = useParams();
   const navigate = useNavigate();
-  const [nextSlot, setNextSlot] = useState(null);
+  const [slots, setSlots] = useState([]); // Store all booked slots
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [callAvailable, setCallAvailable] = useState(false);
+  const [activeSessions, setActiveSessions] = useState({}); // { slotId: { active, session } }
   const { callActive, startCall, endCall } = useVideoCall();
   const [sessionId, setSessionId] = useState(null);
 
   const token = null; // Use a real token for production
 
-  // Poll for next slot and call status
+  // Poll for all slots and their call status
   useEffect(() => {
     let interval;
-    const fetchNextSlot = async () => {
+    const fetchSlotsAndSessions = async () => {
       setLoading(true);
       setError(null);
       try {
@@ -32,55 +32,33 @@ const JoinClass = () => {
         const data = await res.json();
         let slots = Array.isArray(data.schedule) ? data.schedule : [];
         slots = slots.filter(slot => slot.isBooked === true || slot.isBooked === 'true');
-        const now = DateTime.now();
-        const getNextOccurrence = (slot) => {
-          if (!slot.day || !slot.time) return null;
-          const [start] = slot.time.split('-').map(s => s.trim());
-          const daysOfWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-          const slotDayIdx = daysOfWeek.indexOf(slot.day);
-          if (slotDayIdx === -1) return null;
-          let next = now.set({ hour: 0, minute: 0, second: 0, millisecond: 0 });
-          next = next.plus({ days: (slotDayIdx - now.weekday % 7 + 7) % 7 });
-          const [h, m] = start.split(':');
-          next = next.set({ hour: parseInt(h, 10), minute: parseInt(m, 10) });
-          if (next < now) next = next.plus({ days: 7 });
-          return next;
-        };
-        const slotsWithNext = slots.map(slot => ({ ...slot, nextOccurrence: getNextOccurrence(slot) })).filter(slot => slot.nextOccurrence);
-        slotsWithNext.sort((a, b) => a.nextOccurrence - b.nextOccurrence);
-        const slot = slotsWithNext.length > 0 ? slotsWithNext[0] : null;
-        setNextSlot(slot);
-        // Check if call is available using backend
-        if (slot) {
-          const activeRes = await fetch(`http://localhost:5000/api/video-call/active?studentId=${username}&slotId=${slot.slotId || slot.slot_id}`);
+        setSlots(slots);
+        // Check for active sessions for all slots
+        const sessions = {};
+        for (const slot of slots) {
+          const slotId = slot.slotId || slot.slot_id;
+          const activeRes = await fetch(`http://localhost:5000/api/video-call/active?studentId=${username}&slotId=${slotId}`);
           const activeData = await activeRes.json();
-          setCallAvailable(activeData.active);
-          if (activeData.session && activeData.session.SessionID) {
-            setSessionId(activeData.session.SessionID);
-          } else {
-            setSessionId(null);
-          }
-        } else {
-          setCallAvailable(false);
-          setSessionId(null);
+          sessions[slotId] = { active: activeData.active, session: activeData.session };
         }
+        setActiveSessions(sessions);
       } catch (err) {
         setError(err.message);
       } finally {
         setLoading(false);
       }
     };
-    fetchNextSlot();
-    interval = setInterval(fetchNextSlot, 5000);
+    fetchSlotsAndSessions();
+    interval = setInterval(fetchSlotsAndSessions, 5000);
     return () => clearInterval(interval);
   }, [username]);
 
   // Add this function to handle auto-open after call started
-  const autoOpenQuranLesson = async () => {
-    if (!nextSlot) return;
+  const autoOpenQuranLesson = async (slot) => {
+    if (!slot) return;
     const studentUsername = username;
-    const teacherUsername = nextSlot.teacher?.username;
-    const courseId = nextSlot.course?.courseId;
+    const teacherUsername = slot.teacher?.username;
+    const courseId = slot.course?.courseId;
     if (studentUsername && courseId && teacherUsername) {
       const lessonsRes = await fetch(`http://localhost:5000/GetCourseLessons?username=${encodeURIComponent(studentUsername)}&courseId=${encodeURIComponent(courseId)}`);
       if (lessonsRes.ok) {
@@ -110,57 +88,67 @@ const JoinClass = () => {
 
   return (
     <div className="dashboard-container" style={{ minHeight: '100vh', background: '#f6f6e9' }}>
-        <Sidebar onSectionChange={()=>{}} />
+      <Sidebar onSectionChange={()=>{}} />
       <div className="main-content" style={{ maxWidth: 600, margin: '0 auto', padding: '2rem 0' }}>
         <h2 className="section-header">Join Class</h2>
         {loading ? (
-          <div>Loading next slot...</div>
+          <div>Loading slots...</div>
         ) : error ? (
           <div style={{ color: 'red' }}>{error}</div>
-        ) : !nextSlot ? (
-          <div style={{ color: '#888', fontSize: '1.1rem' }}>No upcoming slot found.</div>
-        ) : !callAvailable ? (
-          <div style={{ color: '#888', fontSize: '1.1rem' }}>Waiting for teacher to start the call...</div>
+        ) : slots.length === 0 ? (
+          <div style={{ color: '#888', fontSize: '1.1rem' }}>No booked slots found.</div>
         ) : (
-          <div className="slot-card" style={{ marginBottom: '2rem' }}>
-            {nextSlot.teacher && (
-              <div className="slot-teacher">Teacher: {nextSlot.teacher.teacherName || nextSlot.teacher.name || nextSlot.teacher.username}</div>
-            )}
-            {nextSlot.course && nextSlot.course.courseName && (
-              <div className="slot-course">Course: {nextSlot.course.courseName}</div>
-            )}
-            <div className="slot-details">
-              {nextSlot.day && <span className="slot-day">{nextSlot.day}</span>}
-              {nextSlot.time && <span className="slot-time">{nextSlot.time}</span>}
-            </div>
-            <button
-              className="btn btn-primary"
-              style={{ marginTop: 20, padding: '0.7rem 2.2rem', fontSize: '1.1rem' }}
-              onClick={async () => {
-                await startCall({
-                  channel: `class_${nextSlot.slotId}`,
-                  username,
-                  token: null,
-                  role: 'student',
-                  slotId: nextSlot.slotId,
-                  sessionId: sessionId,
-                });
-                await autoOpenQuranLesson();
-              }}
-              disabled={callActive}
-            >
-              {callActive ? 'Call Started' : 'Join Call'}
-            </button>
-            {callActive && (
-              <button
-                className="btn btn-secondary"
-                style={{ marginLeft: 16 }}
-                onClick={endCall}
-              >
-                End Call
-              </button>
-            )}
-          </div>
+          <>
+            {slots.map(slot => {
+              const slotId = slot.slotId || slot.slot_id;
+              const sessionInfo = activeSessions[slotId];
+              return (
+                <div key={slotId} className="slot-card" style={{ marginBottom: '2rem' }}>
+                  {slot.teacher && (
+                    <div className="slot-teacher">Teacher: {slot.teacher.teacherName || slot.teacher.name || slot.teacher.username}</div>
+                  )}
+                  {slot.course && slot.course.courseName && (
+                    <div className="slot-course">Course: {slot.course.courseName}</div>
+                  )}
+                  <div className="slot-details">
+                    {slot.day && <span className="slot-day">{slot.day}</span>}
+                    {slot.time && <span className="slot-time">{slot.time}</span>}
+                  </div>
+                  {sessionInfo && sessionInfo.active ? (
+                    <button
+                      className="btn btn-primary"
+                      style={{ marginTop: 20, padding: '0.7rem 2.2rem', fontSize: '1.1rem' }}
+                      onClick={async () => {
+                        await startCall({
+                          channel: `class_${slotId}`,
+                          username,
+                          token: null,
+                          role: 'student',
+                          slotId: slotId,
+                          sessionId: sessionInfo.session?.SessionID,
+                        });
+                        await autoOpenQuranLesson(slot);
+                      }}
+                      disabled={callActive}
+                    >
+                      {callActive ? 'Call Started' : 'Join Call'}
+                    </button>
+                  ) : (
+                    <div style={{ color: '#888', fontSize: '1.1rem' }}>Waiting for teacher to start the call...</div>
+                  )}
+                  {callActive && (
+                    <button
+                      className="btn btn-secondary"
+                      style={{ marginLeft: 16 }}
+                      onClick={endCall}
+                    >
+                      End Call
+                    </button>
+                  )}
+                </div>
+              );
+            })}
+          </>
         )}
       </div>
     </div>

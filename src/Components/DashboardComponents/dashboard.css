@@ -2700,6 +2700,12 @@ body {
   overflow: hidden;
 }
 
+.video-box-label {
+  position: absolute;
+  top: -15px;
+  background: rgba(255,255,255,0.85);
+}
+
 .video-box.muted::after {
   content: '\\1F507';
   position: absolute;
